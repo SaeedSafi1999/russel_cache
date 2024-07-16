@@ -1,6 +1,7 @@
 
 use std::io::{self, Write};
 use crate::cache::Cache;
+use crate::public_api::server;
 
 pub fn handle_input(cache: &Cache) {
     loop {
