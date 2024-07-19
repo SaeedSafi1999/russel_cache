@@ -1,0 +1,116 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\workplace\\pars-cache\\CacheUI\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{D198F702-4E83-4BD7-8312-76E295DDAEC1}|CacheUI\\CacheUI.csproj|d:\\workplace\\pars-cache\\cacheui\\cacheui\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{D198F702-4E83-4BD7-8312-76E295DDAEC1}|CacheUI\\CacheUI.csproj|solutionrelative:cacheui\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D198F702-4E83-4BD7-8312-76E295DDAEC1}|CacheUI\\CacheUI.csproj|d:\\workplace\\pars-cache\\cacheui\\cacheui\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D198F702-4E83-4BD7-8312-76E295DDAEC1}|CacheUI\\CacheUI.csproj|solutionrelative:cacheui\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\DIAKO\\AppData\\Local\\Temp\\.vsdbgsrc\\b49ace08f4cd26a4f275d628999a0f91ccb8a1892704530d9e6f5bd1284082f1\\ResourcePart.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D198F702-4E83-4BD7-8312-76E295DDAEC1}|CacheUI\\CacheUI.csproj|d:\\workplace\\pars-cache\\cacheui\\cacheui\\app.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{D198F702-4E83-4BD7-8312-76E295DDAEC1}|CacheUI\\CacheUI.csproj|solutionrelative:cacheui\\app.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D198F702-4E83-4BD7-8312-76E295DDAEC1}|CacheUI\\CacheUI.csproj|d:\\workplace\\pars-cache\\cacheui\\cacheui\\views\\clusterview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{D198F702-4E83-4BD7-8312-76E295DDAEC1}|CacheUI\\CacheUI.csproj|solutionrelative:cacheui\\views\\clusterview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D198F702-4E83-4BD7-8312-76E295DDAEC1}|CacheUI\\CacheUI.csproj|d:\\workplace\\pars-cache\\cacheui\\cacheui\\views\\clusterview.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D198F702-4E83-4BD7-8312-76E295DDAEC1}|CacheUI\\CacheUI.csproj|solutionrelative:cacheui\\views\\clusterview.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 3,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "ResourcePart.cs",
+              "DocumentMoniker": "C:\\Users\\DIAKO\\AppData\\Local\\Temp\\.vsdbgsrc\\b49ace08f4cd26a4f275d628999a0f91ccb8a1892704530d9e6f5bd1284082f1\\ResourcePart.cs",
+              "ToolTip": "C:\\Users\\DIAKO\\AppData\\Local\\Temp\\.vsdbgsrc\\b49ace08f4cd26a4f275d628999a0f91ccb8a1892704530d9e6f5bd1284082f1\\ResourcePart.cs [Read Only]",
+              "ViewState": "AQIAACgAAAAAAAAAAAAYwDwAAAADAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-07-16T14:04:21.667Z",
+              "EditorCaption": " [Read Only]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "ClusterView.xaml",
+              "DocumentMoniker": "D:\\workplace\\pars-cache\\CacheUI\\CacheUI\\Views\\ClusterView.xaml",
+              "RelativeDocumentMoniker": "CacheUI\\Views\\ClusterView.xaml",
+              "ToolTip": "D:\\workplace\\pars-cache\\CacheUI\\CacheUI\\Views\\ClusterView.xaml",
+              "RelativeToolTip": "CacheUI\\Views\\ClusterView.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2024-07-16T13:56:24.952Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "ClusterView.xaml.cs",
+              "DocumentMoniker": "D:\\workplace\\pars-cache\\CacheUI\\CacheUI\\Views\\ClusterView.xaml.cs",
+              "RelativeDocumentMoniker": "CacheUI\\Views\\ClusterView.xaml.cs",
+              "ToolTip": "D:\\workplace\\pars-cache\\CacheUI\\CacheUI\\Views\\ClusterView.xaml.cs",
+              "RelativeToolTip": "CacheUI\\Views\\ClusterView.xaml.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-07-16T13:56:17.593Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "MainWindow.xaml",
+              "DocumentMoniker": "D:\\workplace\\pars-cache\\CacheUI\\CacheUI\\MainWindow.xaml",
+              "RelativeDocumentMoniker": "CacheUI\\MainWindow.xaml",
+              "ToolTip": "D:\\workplace\\pars-cache\\CacheUI\\CacheUI\\MainWindow.xaml*",
+              "RelativeToolTip": "CacheUI\\MainWindow.xaml*",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2024-07-16T13:56:09.814Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "MainWindow.xaml.cs",
+              "DocumentMoniker": "D:\\workplace\\pars-cache\\CacheUI\\CacheUI\\MainWindow.xaml.cs",
+              "RelativeDocumentMoniker": "CacheUI\\MainWindow.xaml.cs",
+              "ToolTip": "D:\\workplace\\pars-cache\\CacheUI\\CacheUI\\MainWindow.xaml.cs",
+              "RelativeToolTip": "CacheUI\\MainWindow.xaml.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABEAAAArAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-07-16T13:56:08.415Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "App.xaml",
+              "DocumentMoniker": "D:\\workplace\\pars-cache\\CacheUI\\CacheUI\\App.xaml",
+              "RelativeDocumentMoniker": "CacheUI\\App.xaml",
+              "ToolTip": "D:\\workplace\\pars-cache\\CacheUI\\CacheUI\\App.xaml",
+              "RelativeToolTip": "CacheUI\\App.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2024-07-16T13:55:32.008Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
