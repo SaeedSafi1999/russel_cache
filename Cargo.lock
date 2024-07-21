@@ -3,6 +3,17 @@
 version = 3
 
 [[package]]
+name = "RusselCache"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "serde",
+ "serde_json",
+ "tokio",
+ "windows-service",
+]
+
+[[package]]
 name = "actix-codec"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -707,17 +718,6 @@ dependencies = [
  "redox_syscall",
  "smallvec",
  "windows-targets 0.52.6",
-]
-
-[[package]]
-name = "pars-cache"
-version = "0.1.0"
-dependencies = [
- "actix-web",
- "serde",
- "serde_json",
- "tokio",
- "windows-service",
 ]
 
 [[package]]

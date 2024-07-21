@@ -21,6 +21,11 @@ impl Cache {
         cluster_store.insert(key, value);
     }
 
+    pub fn set_cluster(&self, cluster: String) {
+        let mut store = self.store.lock().unwrap();
+        store.entry(cluster).or_insert_with(HashMap::new);
+    }
+
     pub fn get(&self, cluster: &str, key: &str) -> Option<Vec<u8>> {
         let store = self.store.lock().unwrap();
         store.get(cluster).and_then(|cluster_store| cluster_store.get(key).cloned())

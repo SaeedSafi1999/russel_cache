@@ -10,13 +10,17 @@ use crate::input::handle_input;
 use crate::public_api::server;
 use cache::Cache;
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    let cache = Arc::new(Mutex::new(Cache::new())); // Wrap Cache in Arc<Mutex<...>>
-    server::run_server(cache).await
+// #[actix_web::main]
+// async fn main() -> std::io::Result<()> {
+//     let cache = Arc::new(Mutex::new(Cache::new())); // Wrap Cache in Arc<Mutex<...>>
+//     server::run_server(cache).await
+// }
+
+fn main(){
+    // let cache = cache::Cache::new(); 
+    let cache = Arc::new(Mutex::new(Cache::new())); 
+    handle_input(cache) ;
 }
-
-
 
 
 // use std::sync::{Arc, Mutex};
