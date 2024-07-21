@@ -139,6 +139,7 @@ fn install_service() -> windows_service::Result<()> {
     Ok(())
 }
 
+
 fn start_service() -> windows_service::Result<()> {
     let manager_access = ServiceManagerAccess::CONNECT;
     let service_manager = ServiceManager::local_computer(None::<&str>, manager_access)?;
@@ -148,6 +149,7 @@ fn start_service() -> windows_service::Result<()> {
     service.start(&args)?;
     Ok(())
 }
+
 
 fn stop_service() -> windows_service::Result<()> {
     let manager_access = ServiceManagerAccess::CONNECT;
@@ -211,8 +213,13 @@ pub fn handle_input(cache: Arc<Mutex<Cache>>) {
             continue;
         }
 
-    
-
+        let cache_clone = Arc::clone(&cache);
+        std::thread::spawn(move || {
+            actix_web::rt::System::new().block_on(async move {
+                server::run_server(cache_clone).await.unwrap();
+            });
+        });
+        
         match parts[0] {
             "russel" => {
                 if parts.len() > 1 {
@@ -238,6 +245,13 @@ pub fn handle_input(cache: Arc<Mutex<Cache>>) {
                             });
                             let port = cache.lock().unwrap().get_default_port();
                             println!("RusselCache running on port {}", port);
+                        }
+                        "get_keys" if parts.len() == 3 => { // get keys of a cluster
+                            let cluster = parts[2];
+                            match cache.lock().unwrap().get_keys_of_cluster(cluster) {
+                                Some(keys) => println!("Keys in cluster [{}]: {:?}", cluster, keys),
+                                None => println!("Cluster [{}] not found", cluster),
+                            }
                         }
                         "get" if parts.len() == 4 => { // get value
                             let cluster = parts[2];

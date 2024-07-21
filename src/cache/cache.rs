@@ -31,6 +31,11 @@ impl Cache {
         store.get(cluster).and_then(|cluster_store| cluster_store.get(key).cloned())
     }
 
+    pub fn get_keys_of_cluster(&self, cluster: &str) -> Option<Vec<String>> {
+        let store = self.store.lock().unwrap();
+        store.get(cluster).map(|cluster_store| cluster_store.keys().cloned().collect())
+    }
+    
     pub fn delete(&self, cluster: &str, key: &str) {
         let mut store = self.store.lock().unwrap();
         if let Some(cluster_store) = store.get_mut(cluster) {
