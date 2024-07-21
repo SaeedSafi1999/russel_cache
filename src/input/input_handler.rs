@@ -92,21 +92,25 @@
 //     print!("> ");
 //     io::stdout().flush().unwrap();
 // }
+
+
 use std::ffi::OsString;
+use std::io::{self, Write};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use std::io::{self, Write};
 
 use crate::cache::Cache;
 use crate::public_api::server;
 
 use windows_service::service::{
-    ServiceAccess, ServiceControl, ServiceControlAccept, ServiceErrorControl, ServiceExitCode, ServiceInfo, ServiceStartType, ServiceState, ServiceType
+    ServiceAccess, ServiceControl, ServiceControlAccept, ServiceErrorControl, ServiceExitCode,
+    ServiceInfo, ServiceStartType, ServiceState, ServiceType,
 };
 use windows_service::service_manager::{ServiceManager, ServiceManagerAccess};
-use windows_service::service_control_handler::{self, ServiceControlHandlerResult};
-use windows_service::service_control_handler::ServiceStatusHandle;
+use windows_service::service_control_handler::{
+    self, ServiceControlHandlerResult, ServiceStatusHandle,
+};
 
 const SERVICE_NAME: &str = "RusselCacheService";
 const SERVICE_DISPLAY_NAME: &str = "Russel Cache Service";
@@ -116,7 +120,7 @@ fn install_service() -> windows_service::Result<()> {
     let manager_access = ServiceManagerAccess::CONNECT | ServiceManagerAccess::CREATE_SERVICE;
     let service_manager = ServiceManager::local_computer(None::<&str>, manager_access)?;
 
-    let service_binary_path = std::env::current_exe()?.to_str().unwrap().to_owned();
+    let service_binary_path = std::env::current_exe().unwrap();
 
     let service_info = ServiceInfo {
         name: OsString::from(SERVICE_NAME),
@@ -124,7 +128,7 @@ fn install_service() -> windows_service::Result<()> {
         service_type: ServiceType::OWN_PROCESS,
         start_type: ServiceStartType::AutoStart,
         error_control: ServiceErrorControl::Normal,
-        executable_path: PathBuf::from(service_binary_path),
+        executable_path: service_binary_path,
         launch_arguments: vec![],
         dependencies: vec![],
         account_name: None,
@@ -140,7 +144,8 @@ fn start_service() -> windows_service::Result<()> {
     let service_manager = ServiceManager::local_computer(None::<&str>, manager_access)?;
     let service_access = ServiceAccess::START;
     let service = service_manager.open_service(SERVICE_NAME, service_access)?;
-    service.start(&[])?;
+    let args: Vec<OsString> = Vec::new();
+    service.start(&args)?;
     Ok(())
 }
 
@@ -177,8 +182,8 @@ fn run_service(_arguments: Vec<OsString>) -> windows_service::Result<()> {
         }
     })?;
 
-    let next_status = windows_service::service::ServiceStatus {
-        process_id:Some(123456789),
+    let initial_status = windows_service::service::ServiceStatus {
+        process_id: None,
         service_type: ServiceType::OWN_PROCESS,
         current_state: ServiceState::Running,
         controls_accepted: ServiceControlAccept::STOP,
@@ -186,7 +191,7 @@ fn run_service(_arguments: Vec<OsString>) -> windows_service::Result<()> {
         checkpoint: 0,
         wait_hint: Duration::from_secs(0),
     };
-    status_handle.set_service_status(next_status)?;
+    status_handle.set_service_status(initial_status)?;
 
     loop {
         std::thread::sleep(Duration::from_secs(60));
@@ -205,6 +210,8 @@ pub fn handle_input(cache: Arc<Mutex<Cache>>) {
         if parts.is_empty() {
             continue;
         }
+
+    
 
         match parts[0] {
             "russel" => {
