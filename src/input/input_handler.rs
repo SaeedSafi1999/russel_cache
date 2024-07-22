@@ -1,98 +1,3 @@
-// use std::io::{self, Write};
-// use std::sync::{Arc, Mutex};
-// use crate::cache::Cache;
-// use crate::public_api::server;
-
-// pub fn handle_input(cache: Arc<Mutex<Cache>>) {
-//     loop {
-//         print_prompt();
-
-//         let mut input = String::new();
-//         io::stdin().read_line(&mut input).unwrap();
-//         let input = input.trim();
-
-//         let parts: Vec<&str> = input.splitn(4, ' ').collect();
-//         if parts.is_empty() {
-//             continue;
-//         }
-
-//         match parts[0] {
-//             "set" if parts.len() == 4 => {// set value for cluster
-//                 let cluster = parts[1].to_string();
-//                 let key = parts[2].to_string();
-//                 let value = parts[3].as_bytes().to_vec();
-//                 cache.lock().unwrap().set(cluster.clone(), key.clone(), value);
-//                 println!("Set [{}] {} = {}", cluster, key, parts[3]);
-//             }
-//             "set" if parts.len() == 2 => { // set cluster
-//                 let cluster = parts[1].to_string();
-//                 cache.lock().unwrap().set_cluster(cluster.clone());
-//                 println!("Cluster [{}] set", cluster);
-//             }
-//             "start_server" => { // start server on default or specified port
-//                 let cache_clone = Arc::clone(&cache);
-//                 std::thread::spawn(move || {
-//                     actix_web::rt::System::new().block_on(async move {
-//                         server::run_server(cache_clone).await.unwrap();
-//                     });
-//                 });
-//                 let port = cache.lock().unwrap().get_default_port();
-//                 println!("RusselCache running on port {}", port);
-//             }
-//             "get" if parts.len() == 3 => {//get value
-//                 let cluster = parts[1];
-//                 let key = parts[2];
-//                 match cache.lock().unwrap().get(cluster, key) {
-//                     Some(value) => println!("{:?}", String::from_utf8_lossy(&value)),
-//                     None => println!("{} not found in cluster [{}]", key, cluster),
-//                 }
-//             }
-//             "delete" if parts.len() == 3 => {//delete value
-//                 let cluster = parts[1];
-//                 let key = parts[2];
-//                 cache.lock().unwrap().delete(cluster, key);
-//                 println!("Deleted {} from cluster [{}]", key, cluster);
-//             }
-//             "clear_cluster" if parts.len() == 2 => {//clear cluster
-//                 let cluster = parts[1];
-//                 cache.lock().unwrap().clear_cluster(cluster);
-//                 println!("Cleared cluster [{}]", cluster);
-//             }
-//             "clear_all" => {//clear all the cache
-//                 cache.lock().unwrap().clear_all();
-//                 println!("Cleared all clusters");
-//             }
-//             "get_clusters" => {//get clusters
-//                 let clusters = cache.lock().unwrap().get_all_clusters();
-//                 let port = cache.lock().unwrap().get_default_port();
-//                 println!("Clusters on port {} are: {:?}", port, clusters);
-//             }
-//             "port" => {// port that run on
-//                 let port = cache.lock().unwrap().get_default_port();
-//                 println!("Port is: {}", port);
-//             }
-//             "help" => {
-//                 println!("for set use => set [cluster name] [key] [value]");
-//                 println!("for set cluster => set [cluster name]");
-//                 println!("for get use => get [cluster name] [key]");
-//                 println!("for delete use => delete [cluster name] [key]");
-//                 println!("for clear cluster => clear_cluster [cluster name]");
-//                 println!("for clear all => clear_all");
-//                 println!("for get clusters name => get_clusters");
-//                 println!("see port that app is running on => port");
-//                 println!("for kill process => exit");
-//             }
-//             "exit" => break,
-//             _ => println!("Invalid command. Use 'help' to see available commands."),
-//         }
-//     }
-// }
-
-// fn print_prompt() {
-//     print!("> ");
-//     io::stdout().flush().unwrap();
-// }
-
 
 use std::ffi::OsString;
 use std::io::{self, Write};
@@ -107,6 +12,7 @@ use windows_service::service::{
     ServiceAccess, ServiceControl, ServiceControlAccept, ServiceErrorControl, ServiceExitCode,
     ServiceInfo, ServiceStartType, ServiceState, ServiceType,
 };
+
 use windows_service::service_manager::{ServiceManager, ServiceManagerAccess};
 use windows_service::service_control_handler::{
     self, ServiceControlHandlerResult, ServiceStatusHandle,
@@ -329,7 +235,7 @@ pub fn handle_input(cache: Arc<Mutex<Cache>>) {
                     }
                 }
             }
-            _ => println!("Invalid command prefix. Use 'russel' to start commands."),
+            _ => println!("Invalid command prefix. Use 'russel help' to start commands."),
         }
     }
 }

@@ -5,16 +5,16 @@ use std::sync::{Arc, Mutex};
 pub struct Cache {
     store: Arc<Mutex<HashMap<String, HashMap<String, Vec<u8>>>>>,
     default_port: u16,
-    max_ram_limit:u16
+    //max_ram_limit:u16
 }
 
 
 impl Cache {
-    pub fn new(max_ram_limit:u16) -> Self {
+    pub fn new() -> Self {
         Cache {
             store: Arc::new(Mutex::new(HashMap::new())),
             default_port: 5022, // Default port configuration
-            max_ram_limit:max_ram_limit
+            //max_ram_limit:max_ram_limit
         }
     }
 
