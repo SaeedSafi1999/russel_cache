@@ -119,13 +119,7 @@ pub fn handle_input(cache: Arc<Mutex<Cache>>) {
             continue;
         }
 
-        let cache_clone = Arc::clone(&cache);
-        std::thread::spawn(move || {
-            actix_web::rt::System::new().block_on(async move {
-                let settings:Settings = Settings::new();
-                server::run_server(cache_clone,settings.port.to_string()).await.unwrap();
-            });
-        });
+        
         
         match parts[0] {
             "russel" => {
@@ -142,17 +136,6 @@ pub fn handle_input(cache: Arc<Mutex<Cache>>) {
                             let cluster = parts[2].to_string();
                             cache.lock().unwrap().set_cluster(cluster.clone());
                             println!("Cluster [{}] set", cluster);
-                        }
-                        "start_server" => { // start server on default or specified port
-                            let cache_clone = Arc::clone(&cache);
-                            std::thread::spawn(move || {
-                                actix_web::rt::System::new().block_on(async move {
-                                    let settings:Settings = Settings::new();
-                                    server::run_server(cache_clone,settings.port.to_string()).await.unwrap();
-                                });
-                            });
-                            let port = cache.lock().unwrap().get_default_port();
-                            println!("RusselCache running on port {}", port);
                         }
                         "get_keys" if parts.len() == 3 => { // get keys of a cluster
                             let cluster = parts[2];
@@ -232,7 +215,7 @@ pub fn handle_input(cache: Arc<Mutex<Cache>>) {
                             println!("for delete service => russel delete_service");
                             println!("for kill process => russel exit");
                         }
-                        "exit" => break,
+                        //"exit" => break,
                         _ => println!("Invalid command. Use 'russel help' to see available commands."),
                     }
                 }
