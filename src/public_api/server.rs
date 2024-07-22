@@ -71,7 +71,6 @@ pub async fn get_port(cache: web::Data<Arc<Mutex<Cache>>>) -> HttpResponse {
     HttpResponse::Ok().json(ApiResponse::new(port))
 }
 
-
 pub async fn run_server(cache: Arc<Mutex<Cache>>,port_number:String) -> std::io::Result<()> {
     let port:String = port_number;
     HttpServer::new(move || {

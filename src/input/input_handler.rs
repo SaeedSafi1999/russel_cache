@@ -3,11 +3,11 @@ use std::ffi::OsString;
 use std::io::{self, Write};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+use std::thread;
 
 use crate::cache::Cache;
-use crate::config::Settings;
-use crate::public_api::server;
 
+use winapi::shared::lmcons::NET_API_STATUS;
 use windows_service::service::{
     ServiceAccess, ServiceControl, ServiceControlAccept, ServiceErrorControl, ServiceExitCode,
     ServiceInfo, ServiceStartType, ServiceState, ServiceType,
@@ -17,6 +17,34 @@ use windows_service::service_manager::{ServiceManager, ServiceManagerAccess};
 use windows_service::service_control_handler::{
     self, ServiceControlHandlerResult
 };
+use winapi::um::lmaccess::{USER_INFO_1,NetUserAdd,UF_SCRIPT};
+use std::iter::{once};
+use std::os::windows::ffi::OsStrExt;
+use std::ffi::OsStr;
+
+pub fn winstr(value: &str) -> Vec<u16> {
+    OsStr::new(value).encode_wide().chain(once(0)).collect()
+}
+
+pub fn set_user(user_name:&str,password:&str)-> u32 {
+    let mut username = winstr(user_name);
+    let mut password = winstr(password);
+    let mut user = USER_INFO_1{
+    usri1_name: username.as_mut_ptr(),
+    usri1_password: password.as_mut_ptr(),
+    usri1_priv: 1,
+    usri1_password_age: 0,
+    usri1_home_dir: std::ptr::null_mut(),
+    usri1_comment: std::ptr::null_mut(),
+    usri1_flags: UF_SCRIPT,
+    usri1_script_path: std::ptr::null_mut(),
+    };
+    let mut error = 0 ;
+    unsafe{
+       let add_user_result =  NetUserAdd(std::ptr::null_mut(),1,&mut user as *mut _ as _,&mut error);
+    };
+    return error;
+}
 
 const SERVICE_NAME: &str = "RusselCacheService";
 const SERVICE_DISPLAY_NAME: &str = "Russel Cache Service";
@@ -27,8 +55,11 @@ fn install_service() -> windows_service::Result<()> {
     let service_manager = ServiceManager::local_computer(None::<&str>, manager_access)?;
 
     let service_binary_path = std::env::current_exe().unwrap();
-
-    let service_info = ServiceInfo {
+    let password: Option<OsString> = Some(OsString::from("QAZWSXEDCRFVTGBYHNUJMIK!@^%$#"));
+    let account_name: Option<OsString> = Some(OsString::from("RusselCacheServiceAccount"));
+    let set_user_result =  set_user("RusselCacheServiceAccount", "QAZWSXEDCRFVTGBYHNUJMIK!@^%$#");
+    println!("{:?}",set_user_result);
+    let service_info = windows_service::service::ServiceInfo {
         name: OsString::from(SERVICE_NAME),
         display_name: OsString::from(SERVICE_DISPLAY_NAME),
         service_type: ServiceType::OWN_PROCESS,
@@ -37,14 +68,25 @@ fn install_service() -> windows_service::Result<()> {
         executable_path: service_binary_path,
         launch_arguments: vec![],
         dependencies: vec![],
-        account_name: None,
-        account_password: None,
+        account_name: account_name,
+        account_password: password,
     };
 
     service_manager.create_service(&service_info, ServiceAccess::START | ServiceAccess::STOP | ServiceAccess::DELETE)?;
     Ok(())
 }
 
+// fn start_service() -> windows_service::Result<()> {
+//     let manager_access = ServiceManagerAccess::CONNECT;
+//     let service_manager = ServiceManager::local_computer(None::<&str>, manager_access)?;
+//     let service_access = ServiceAccess::START;
+//     let service_control_handler = service_control_handler::ServiceControlHandlerResult::NoError;
+//     let service = service_manager.open_service(SERVICE_NAME, service_access)?;
+//     let args: Vec<OsString> = Vec::new();
+//     service.start(&args)?;
+//     run_service(args.clone());
+//     Ok(())
+// }
 
 fn start_service() -> windows_service::Result<()> {
     let manager_access = ServiceManagerAccess::CONNECT;
@@ -53,6 +95,13 @@ fn start_service() -> windows_service::Result<()> {
     let service = service_manager.open_service(SERVICE_NAME, service_access)?;
     let args: Vec<OsString> = Vec::new();
     service.start(&args)?;
+    let event_handler = move |control_event| -> ServiceControlHandlerResult {
+        match control_event {
+            ServiceControl::Interrogate => ServiceControlHandlerResult::NoError,
+            _ => ServiceControlHandlerResult::NotImplemented,
+        }
+    };
+    let status_handle = service_control_handler::register(SERVICE_NAME, event_handler)?;
     Ok(())
 }
 
@@ -107,6 +156,8 @@ fn run_service(_arguments: Vec<OsString>) -> windows_service::Result<()> {
 }
 
 pub fn handle_input(cache: Arc<Mutex<Cache>>) {
+    const VERSION: &str = env!("CARGO_PKG_VERSION");
+    const APP_NAME: &str = env!("CARGO_PKG_NAME");
     loop {
         print_prompt();
 
@@ -118,8 +169,6 @@ pub fn handle_input(cache: Arc<Mutex<Cache>>) {
         if parts.is_empty() {
             continue;
         }
-
-        
         
         match parts[0] {
             "russel" => {
@@ -131,6 +180,9 @@ pub fn handle_input(cache: Arc<Mutex<Cache>>) {
                             let value = parts[4].as_bytes().to_vec();
                             cache.lock().unwrap().set(cluster.clone(), key.clone(), value);
                             println!("Set [{}] {} = {}", cluster, key, parts[4]);
+                        }
+                        "-v" =>{
+                            println!("{} version {}",APP_NAME,VERSION)
                         }
                         "set" if parts.len() == 3 => { // set cluster
                             let cluster = parts[2].to_string();
@@ -176,25 +228,25 @@ pub fn handle_input(cache: Arc<Mutex<Cache>>) {
                             let port = cache.lock().unwrap().get_default_port();
                             println!("Port is: {}", port);
                         }
-                        "install_service" => {
+                        "--install_service" => {
                             match install_service() {
                                 Ok(_) => println!("Service installed successfully."),
                                 Err(err) => eprintln!("Failed to install service: {:?}", err),
                             }
                         }
-                        "start_service" => {
+                        "--start_service" => {
                             match start_service() {
-                                Ok(_) => println!("Service started successfully."),
+                                Ok(_) => println!("Service run successfully."),
                                 Err(err) => eprintln!("Failed to start service: {:?}", err),
                             }
                         }
-                        "stop_service" => {
+                        "--stop_service" => {
                             match stop_service() {
                                 Ok(_) => println!("Service stopped successfully."),
                                 Err(err) => eprintln!("Failed to stop service: {:?}", err),
                             }
                         }
-                        "delete_service" => {
+                        "--delete_service" => {
                             match delete_service() {
                                 Ok(_) => println!("Service deleted successfully."),
                                 Err(err) => eprintln!("Failed to delete service: {:?}", err),
@@ -209,10 +261,10 @@ pub fn handle_input(cache: Arc<Mutex<Cache>>) {
                             println!("for clear all => russel clear_all");
                             println!("for get clusters name => russel get_clusters");
                             println!("see port that app is running on => russel port");
-                            println!("for install service => russel install_service");
-                            println!("for start service => russel start_service");
-                            println!("for stop service => russel stop_service");
-                            println!("for delete service => russel delete_service");
+                            println!("for install service => russel --install_service");
+                            println!("for start service => russel --start_service");
+                            println!("for stop service => russel --stop_service");
+                            println!("for delete service => russel --delete_service");
                             println!("for kill process => russel exit");
                         }
                         //"exit" => break,
