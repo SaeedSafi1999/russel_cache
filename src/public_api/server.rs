@@ -72,7 +72,8 @@ pub async fn get_port(cache: web::Data<Arc<Mutex<Cache>>>) -> HttpResponse {
 }
 
 
-pub async fn run_server(cache: Arc<Mutex<Cache>>) -> std::io::Result<()> {
+pub async fn run_server(cache: Arc<Mutex<Cache>>,port_number:String) -> std::io::Result<()> {
+    let port:String = port_number;
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(cache.clone())) 
@@ -84,7 +85,7 @@ pub async fn run_server(cache: Arc<Mutex<Cache>>) -> std::io::Result<()> {
             .route("/api/get_clusters", web::get().to(get_all_clusters))
             .route("/api/port", web::get().to(get_port))
     })
-    .bind("127.0.0.1:5022")? // Bind to localhost on port 5022
+    .bind(format!("127.0.0.1:{}",port))? // Bind to localhost on port 5022
     .run()
     .await
 }

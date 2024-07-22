@@ -1,11 +1,11 @@
 
 use std::ffi::OsString;
 use std::io::{self, Write};
-use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use crate::cache::Cache;
+use crate::config::Settings;
 use crate::public_api::server;
 
 use windows_service::service::{
@@ -15,7 +15,7 @@ use windows_service::service::{
 
 use windows_service::service_manager::{ServiceManager, ServiceManagerAccess};
 use windows_service::service_control_handler::{
-    self, ServiceControlHandlerResult, ServiceStatusHandle,
+    self, ServiceControlHandlerResult
 };
 
 const SERVICE_NAME: &str = "RusselCacheService";
@@ -122,7 +122,8 @@ pub fn handle_input(cache: Arc<Mutex<Cache>>) {
         let cache_clone = Arc::clone(&cache);
         std::thread::spawn(move || {
             actix_web::rt::System::new().block_on(async move {
-                server::run_server(cache_clone).await.unwrap();
+                let settings:Settings = Settings::new();
+                server::run_server(cache_clone,settings.port.to_string()).await.unwrap();
             });
         });
         
@@ -146,7 +147,8 @@ pub fn handle_input(cache: Arc<Mutex<Cache>>) {
                             let cache_clone = Arc::clone(&cache);
                             std::thread::spawn(move || {
                                 actix_web::rt::System::new().block_on(async move {
-                                    server::run_server(cache_clone).await.unwrap();
+                                    let settings:Settings = Settings::new();
+                                    server::run_server(cache_clone,settings.port.to_string()).await.unwrap();
                                 });
                             });
                             let port = cache.lock().unwrap().get_default_port();

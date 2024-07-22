@@ -1,13 +1,13 @@
 use std::sync::{Arc, Mutex};
-use tokio::runtime::Builder;
-use actix_web::{web, App, HttpServer};
 
 mod cache;
 mod input;
 mod public_api;
+mod config;
 
+use crate::config::Settings;
 use crate::input::handle_input;
-use crate::public_api::server;
+
 use cache::Cache;
 
 // #[actix_web::main]
@@ -18,7 +18,8 @@ use cache::Cache;
 
 fn main(){
     // let cache = cache::Cache::new(); 
-    let cache = Arc::new(Mutex::new(Cache::new())); 
+    let settings = Settings::new();
+    let cache = Arc::new(Mutex::new(Cache::new(settings.port))); 
     handle_input(cache) ;
 }
 

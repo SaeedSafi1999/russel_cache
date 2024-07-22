@@ -4,16 +4,16 @@ use std::sync::{Arc, Mutex};
 #[derive(Debug, Clone)]
 pub struct Cache {
     store: Arc<Mutex<HashMap<String, HashMap<String, Vec<u8>>>>>,
-    default_port: u16,
+    port: u16,
     //max_ram_limit:u16
 }
 
 
 impl Cache {
-    pub fn new() -> Self {
+    pub fn new(port_number:u16) -> Self {
         Cache {
             store: Arc::new(Mutex::new(HashMap::new())),
-            default_port: 5022, // Default port configuration
+            port: port_number,
             //max_ram_limit:max_ram_limit
         }
     }
@@ -62,10 +62,10 @@ impl Cache {
     }
 
     pub fn configure_default_port(&mut self, port: u16) {
-        self.default_port = port;
+        self.port = port;
     }
 
     pub fn get_default_port(&self) -> u16 {
-        self.default_port
+        self.port
     }
 }
