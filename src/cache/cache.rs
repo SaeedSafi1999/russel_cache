@@ -97,10 +97,10 @@ impl Cache {
         if (!self.memory_handler.lock().unwrap().is_memory_limit_finished()) {
             let mut store = self.store.lock().unwrap();
             let cluster_store = store.entry(cluster.clone()).or_insert_with(HashMap::new);
-            let old_size = cluster_store.get(&key).map_or(0, |v| v.len());
+            let memory_usage = std::mem::size_of_val(&value);
             cluster_store.insert(key, value.clone());
             let mut memory_handler = self.memory_handler.lock().unwrap();
-            memory_handler.add_memory(value.len() - old_size);
+            memory_handler.add_memory(memory_usage);
 
             println!("Set value to [{}] ", cluster);
         }
@@ -130,7 +130,8 @@ impl Cache {
         if let Some(cluster_store) = store.get_mut(cluster) {
             if let Some(value) = cluster_store.remove(key) {
                 let mut memory_handler = self.memory_handler.lock().unwrap();
-                memory_handler.delete_memory(value.len());
+                let memory_usage = std::mem::size_of_val(&value);
+                memory_handler.delete_memory(memory_usage);
             }
         }
     }
@@ -139,7 +140,7 @@ impl Cache {
         let mut store = self.store.lock().unwrap();
         if let Some(cluster_store) = store.remove(cluster) {
             let mut memory_handler = self.memory_handler.lock().unwrap();
-            let total_size: usize = cluster_store.values().map(|v| v.len()).sum();
+            let total_size: usize = cluster_store.values().map(|v| std::mem::size_of_val(&v)).sum();
             memory_handler.delete_memory(total_size);
         }
     }

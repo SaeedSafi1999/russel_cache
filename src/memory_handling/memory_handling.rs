@@ -11,7 +11,7 @@ impl MemoryHandler {
         let limit_memory_value_for_initialize = config::Settings::new();
         MemoryHandler {
             current_memory: 0,
-            memory_size_limit: limit_memory_value_for_initialize.memory_size_limit,
+            memory_size_limit: megabytes_to_bytes(limit_memory_value_for_initialize.memory_size_limit)
         }
     }
 
@@ -30,4 +30,8 @@ impl MemoryHandler {
     pub fn is_memory_limit_finished(&self) -> bool {
         return self.current_memory > self.memory_size_limit ;
     }
+}
+
+fn megabytes_to_bytes(mb: usize) -> usize {
+    mb * 1_048_576
 }
