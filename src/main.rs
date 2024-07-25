@@ -2,11 +2,14 @@ use std::sync::{Arc, Mutex};
 use crate::public_api::server;
 use local_ip_address::local_ip;
 use memory_handling::memory_handling::MemoryHandler;
+use crypto::crypto_service::VigenereCipher;
 mod cache;
 mod input;
 mod public_api;
 mod config;
 mod memory_handling;
+mod crypto;
+
 
 use crate::config::Settings;
 use crate::input::handle_input;

@@ -8,15 +8,21 @@ use crate::cache::Cache;
 
 #[derive(Serialize)]
 struct ApiResponse<T> {
-    status: String,
+    is_success: bool,
     data: T,
 }
 
 
 impl<T> ApiResponse<T> {
-    fn new(data: T) -> Self {
+    fn ok(data: T) -> Self {
         ApiResponse {
-            status: "success".into(),
+            is_success: true,
+            data,
+        }
+    }
+    fn fail(data: T) -> Self {
+        ApiResponse {
+            is_success: false,
             data,
         }
     }
@@ -30,45 +36,46 @@ struct SetRequest {
     value: Vec<u8>,
 }
 
+
 pub async fn set(cache: web::Data<Arc<Mutex<Cache>>>, payload: web::Json<SetRequest>) -> HttpResponse {
     let SetRequest { cluster, key, value } = &*payload;
-
     cache.lock().unwrap().set(cluster.clone(), key.clone(), value.clone());
-    HttpResponse::Ok().json(ApiResponse::new("Set operation successful"))
+    HttpResponse::Ok().json(ApiResponse::ok("Set operation successful"))
 }
+
 
 pub async fn get(cache: web::Data<Arc<Mutex<Cache>>>, info: web::Path<(String, String)>) -> HttpResponse {
     let (cluster, key) = info.into_inner();
     match cache.lock().unwrap().get(&cluster, &key) {
-        Some(value) => HttpResponse::Ok().json(ApiResponse::new(value)),
-        None => HttpResponse::NotFound().json(ApiResponse::new("Key not found")),
+        Some(value) => HttpResponse::Ok().json(ApiResponse::ok(value)),
+        None => HttpResponse::NotFound().json(ApiResponse::fail("Key not found")),
     }
 }
 
 pub async fn delete(cache: web::Data<Arc<Mutex<Cache>>>, info: web::Path<(String, String)>) -> HttpResponse {
     let (cluster, key) = info.into_inner();
     cache.lock().unwrap().delete(&cluster, &key);
-    HttpResponse::Ok().json(ApiResponse::new("Delete operation successful"))
+    HttpResponse::Ok().json(ApiResponse::ok("Delete operation successful"))
 }
 
 pub async fn clear_cluster(cache: web::Data<Arc<Mutex<Cache>>>, cluster: web::Path<String>) -> HttpResponse {
     cache.lock().unwrap().clear_cluster(&cluster);
-    HttpResponse::Ok().json(ApiResponse::new("Clear cluster operation successful"))
+    HttpResponse::Ok().json(ApiResponse::ok("Clear cluster operation successful"))
 }
 
 pub async fn clear_all(cache: web::Data<Arc<Mutex<Cache>>>) -> HttpResponse {
     cache.lock().unwrap().clear_all();
-    HttpResponse::Ok().json(ApiResponse::new("Clear all operation successful"))
+    HttpResponse::Ok().json(ApiResponse::ok("Clear all operation successful"))
 }
 
 pub async fn get_all_clusters(cache: web::Data<Arc<Mutex<Cache>>>) -> HttpResponse {
     let clusters = cache.lock().unwrap().get_all_clusters();
-    HttpResponse::Ok().json(ApiResponse::new(clusters))
+    HttpResponse::Ok().json(ApiResponse::ok(clusters))
 }
 
 pub async fn get_port(cache: web::Data<Arc<Mutex<Cache>>>) -> HttpResponse {
     let port = cache.lock().unwrap().get_default_port();
-    HttpResponse::Ok().json(ApiResponse::new(port))
+    HttpResponse::Ok().json(ApiResponse::ok(port))
 }
 
 pub async fn run_server(cache: Arc<Mutex<Cache>>,port_number:String,ip:String) -> std::io::Result<()> {

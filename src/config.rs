@@ -7,7 +7,7 @@ use std::io::BufReader;
 #[derive(Debug, Deserialize)]
 pub struct Settings {
     pub port: u16,
-    pub memory_size_limit: usize
+    pub memory_size_limit: usize,
 }
 
 impl Settings {
