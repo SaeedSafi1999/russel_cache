@@ -1,3 +1,4 @@
 {
-    "port":6972
+    "port":5022,
+    "memory_size_limit":10
 }

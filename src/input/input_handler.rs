@@ -18,7 +18,7 @@ use windows_service::service_control_handler::{
     self, ServiceControlHandlerResult
 };
 use winapi::um::lmaccess::{USER_INFO_1,NetUserAdd,UF_SCRIPT};
-use std::iter::{once};
+use std::iter::once;
 use std::os::windows::ffi::OsStrExt;
 use std::ffi::OsStr;
 
@@ -76,18 +76,6 @@ fn install_service() -> windows_service::Result<()> {
     Ok(())
 }
 
-// fn start_service() -> windows_service::Result<()> {
-//     let manager_access = ServiceManagerAccess::CONNECT;
-//     let service_manager = ServiceManager::local_computer(None::<&str>, manager_access)?;
-//     let service_access = ServiceAccess::START;
-//     let service_control_handler = service_control_handler::ServiceControlHandlerResult::NoError;
-//     let service = service_manager.open_service(SERVICE_NAME, service_access)?;
-//     let args: Vec<OsString> = Vec::new();
-//     service.start(&args)?;
-//     run_service(args.clone());
-//     Ok(())
-// }
-
 fn start_service() -> windows_service::Result<()> {
     let manager_access = ServiceManagerAccess::CONNECT;
     let service_manager = ServiceManager::local_computer(None::<&str>, manager_access)?;
@@ -100,6 +88,7 @@ fn start_service() -> windows_service::Result<()> {
             ServiceControl::Interrogate => ServiceControlHandlerResult::NoError,
             _ => ServiceControlHandlerResult::NotImplemented,
         }
+
     };
     let status_handle = service_control_handler::register(SERVICE_NAME, event_handler)?;
     Ok(())
@@ -179,7 +168,7 @@ pub fn handle_input(cache: Arc<Mutex<Cache>>) {
                             let key = parts[3].to_string();
                             let value = parts[4].as_bytes().to_vec();
                             cache.lock().unwrap().set(cluster.clone(), key.clone(), value);
-                            println!("Set [{}] {} = {}", cluster, key, parts[4]);
+                            
                         }
                         "-v" =>{
                             println!("{} version {}",APP_NAME,VERSION)
@@ -223,6 +212,11 @@ pub fn handle_input(cache: Arc<Mutex<Cache>>) {
                             let clusters = cache.lock().unwrap().get_all_clusters();
                             let port = cache.lock().unwrap().get_default_port();
                             println!("Clusters on port {} are: {:?}", port, clusters);
+                        }
+                        "connection_string" => {
+                            let ip = local_ip_address::local_ip().unwrap().to_string();
+                            let port = cache.lock().unwrap().get_default_port().to_string();
+                            println!("{}:{}",ip,port);
                         }
                         "port" => { // port that run on
                             let port = cache.lock().unwrap().get_default_port();
