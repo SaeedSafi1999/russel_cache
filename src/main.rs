@@ -9,7 +9,7 @@ mod public_api;
 mod config;
 mod memory_handling;
 mod crypto;
-
+mod env_var;
 
 use crate::config::Settings;
 use crate::input::handle_input;
@@ -17,6 +17,9 @@ use crate::input::handle_input;
 use cache::Cache;
 
 fn main(){
+    //set env vars
+    let exe_dir = std::env::current_dir().unwrap().join("target").join("debug");
+    let env_setter_res = env_var::env_setter::set_user_environment_variable("RUSSEL_CACHE", exe_dir.to_str().unwrap());
     //reading configurations from config.json
     let settings: Settings = Settings::new();
     let mut memory_handler = Arc::new(Mutex::new(MemoryHandler::new()));
