@@ -33,13 +33,14 @@ impl<T> ApiResponse<T> {
 struct SetRequest {
     cluster: String,
     key: String,
-    value: Vec<u8>,
+    value: String,
 }
 
 
 pub async fn set(cache: web::Data<Arc<Mutex<Cache>>>, payload: web::Json<SetRequest>) -> HttpResponse {
     let SetRequest { cluster, key, value } = &*payload;
-    cache.lock().unwrap().set(cluster.clone(), key.clone(), value.clone());
+    let set_value = value.as_bytes();
+    cache.lock().unwrap().set(cluster.clone(), key.clone(), Vec::from(set_value));
     HttpResponse::Ok().json(ApiResponse::ok("Set operation successful"))
 }
 
