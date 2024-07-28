@@ -12,11 +12,12 @@ pub struct Settings {
 
 impl Settings {
     pub fn new() -> Self {
-        let current_dir = env::current_dir()
+        let mut current_dir = env::current_exe()
             .expect("Failed to get current directory");
+        current_dir.push("..");
         let config_path = current_dir.join("config").join("config.json");
         let file = File::open(&config_path)
-            .expect("config.json file not found");
+            .expect(format!("config.json file not found in {}",config_path.as_os_str().to_str().unwrap()).as_str());
         let reader = BufReader::new(file);
         serde_json::from_reader(reader)
             .expect("Error parsing JSON")

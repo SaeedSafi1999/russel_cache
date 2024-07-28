@@ -19,7 +19,7 @@ use cache::Cache;
 fn main(){
     //set env vars
     let exe_dir = std::env::current_dir().unwrap().join("target").join("debug");
-    let env_setter_res = env_var::env_setter::set_user_environment_variable("RUSSEL_CACHE", exe_dir.to_str().unwrap());
+    env_var::env_setter::set_user_path_environment_variable( exe_dir.to_str().unwrap()).unwrap();
     //reading configurations from config.json
     let settings: Settings = Settings::new();
     let mut memory_handler = Arc::new(Mutex::new(MemoryHandler::new()));
