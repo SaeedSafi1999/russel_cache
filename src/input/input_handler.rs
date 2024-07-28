@@ -144,9 +144,7 @@ fn run_service(_arguments: Vec<OsString>) -> windows_service::Result<()> {
     }
 }
 
-pub fn handle_input(cache: Arc<Mutex<Cache>>) {
-    const VERSION: &str = env!("CARGO_PKG_VERSION");
-    const APP_NAME: &str = env!("CARGO_PKG_NAME");
+pub fn handle_input(_cache: Arc<Mutex<Cache>>) {
     loop {
         print_prompt();
 
@@ -154,119 +152,37 @@ pub fn handle_input(cache: Arc<Mutex<Cache>>) {
         io::stdin().read_line(&mut input).unwrap();
         let input = input.trim();
 
-        let parts: Vec<&str> = input.splitn(5, ' ').collect();
+        let parts: Vec<&str> = input.split_whitespace().collect();
         if parts.is_empty() {
             continue;
         }
-        
-        match parts[0] {
-            "russel" => {
-                if parts.len() > 1 {
-                    match parts[1] {
-                        "set" if parts.len() == 5 => { // set value for cluster
-                            let cluster = parts[2].to_string();
-                            let key = parts[3].to_string();
-                            let value = parts[4].as_bytes().to_vec();
-                            cache.lock().unwrap().set(cluster.clone(), key.clone(), value);
-                            
-                        }
-                        "-v" =>{
-                            println!("{} version {}",APP_NAME,VERSION)
-                        }
-                        "set" if parts.len() == 3 => { // set cluster
-                            let cluster = parts[2].to_string();
-                            cache.lock().unwrap().set_cluster(cluster.clone());
-                            println!("Cluster [{}] set", cluster);
-                        }
-                        "get_keys" if parts.len() == 3 => { // get keys of a cluster
-                            let cluster = parts[2];
-                            match cache.lock().unwrap().get_keys_of_cluster(cluster) {
-                                Some(keys) => println!("Keys in cluster [{}]: {:?}", cluster, keys),
-                                None => println!("Cluster [{}] not found", cluster),
-                            }
-                        }
-                        "get" if parts.len() == 4 => { // get value
-                            let cluster = parts[2];
-                            let key = parts[3];
-                            match cache.lock().unwrap().get(cluster, key) {
-                                Some(value) => println!("{:?}", String::from_utf8_lossy(&value)),
-                                None => println!("{} not found in cluster [{}]", key, cluster),
-                            }
-                        }
-                        "delete" if parts.len() == 4 => { // delete value
-                            let cluster = parts[2];
-                            let key = parts[3];
-                            cache.lock().unwrap().delete(cluster, key);
-                            println!("Deleted {} from cluster [{}]", key, cluster);
-                        }
-                        "clear_cluster" if parts.len() == 3 => { // clear cluster
-                            let cluster = parts[2];
-                            cache.lock().unwrap().clear_cluster(cluster);
-                            println!("Cleared cluster [{}]", cluster);
-                        }
-                        "clear_all" => { // clear all the cache
-                            cache.lock().unwrap().clear_all();
-                            println!("Cleared all clusters");
-                        }
-                        "get_clusters" => { // get clusters
-                            let clusters = cache.lock().unwrap().get_all_clusters();
-                            let port = cache.lock().unwrap().get_default_port();
-                            println!("Clusters on port {} are: {:?}", port, clusters);
-                        }
-                        "connection_string" => {
-                            let ip = local_ip_address::local_ip().unwrap().to_string();
-                            let port = cache.lock().unwrap().get_default_port().to_string();
-                            println!("{}:{}",ip,port);
-                        }
-                        "port" => { // port that run on
-                            let port = cache.lock().unwrap().get_default_port();
-                            println!("Port is: {}", port);
-                        }
-                        "--install_service" => {
-                            match install_service() {
-                                Ok(_) => println!("Service installed successfully."),
-                                Err(err) => eprintln!("Failed to install service: {:?}", err),
-                            }
-                        }
-                        "--start_service" => {
-                            match start_service() {
-                                Ok(_) => println!("Service run successfully."),
-                                Err(err) => eprintln!("Failed to start service: {:?}", err),
-                            }
-                        }
-                        "--stop_service" => {
-                            match stop_service() {
-                                Ok(_) => println!("Service stopped successfully."),
-                                Err(err) => eprintln!("Failed to stop service: {:?}", err),
-                            }
-                        }
-                        "--delete_service" => {
-                            match delete_service() {
-                                Ok(_) => println!("Service deleted successfully."),
-                                Err(err) => eprintln!("Failed to delete service: {:?}", err),
-                            }
-                        }
-                        "help" => {
-                            println!("for set use => russel set [cluster name] [key] [value]");
-                            println!("for set cluster => russel set [cluster name]");
-                            println!("for get use => russel get [cluster name] [key]");
-                            println!("for delete use => russel delete [cluster name] [key]");
-                            println!("for clear cluster => russel clear_cluster [cluster name]");
-                            println!("for clear all => russel clear_all");
-                            println!("for get clusters name => russel get_clusters");
-                            println!("see port that app is running on => russel port");
-                            println!("for install service => russel --install_service");
-                            println!("for start service => russel --start_service");
-                            println!("for stop service => russel --stop_service");
-                            println!("for delete service => russel --delete_service");
-                            println!("for kill process => russel exit");
-                        }
-                        //"exit" => break,
-                        _ => println!("Invalid command. Use 'russel help' to see available commands."),
-                    }
+
+        match parts.as_slice() {
+            ["--", "install_service"] => {
+                match install_service() {
+                    Ok(_) => println!("Service installed successfully."),
+                    Err(err) => eprintln!("Failed to install service: {:?}", err),
                 }
             }
-            _ => println!("Invalid command prefix. Use 'russel help' to start commands."),
+            ["--", "start_service"] => {
+                match start_service() {
+                    Ok(_) => println!("Service run successfully."),
+                    Err(err) => eprintln!("Failed to start service: {:?}", err),
+                }
+            }
+            ["--", "stop_service"] => {
+                match stop_service() {
+                    Ok(_) => println!("Service stopped successfully."),
+                    Err(err) => eprintln!("Failed to stop service: {:?}", err),
+                }
+            }
+            ["--", "delete_service"] => {
+                match delete_service() {
+                    Ok(_) => println!("Service deleted successfully."),
+                    Err(err) => eprintln!("Failed to delete service: {:?}", err),
+                }
+            }
+            _ => println!("Invalid command. Use '-- install_service', '-- start_service', '-- stop_service', or '-- delete_service'."),
         }
     }
 }
