@@ -10,110 +10,150 @@ use std::ptr::null_mut;
 use std::mem::zeroed;
 use std::slice;
 use std::iter::once;
-
 use crate::cache::Cache;
 
-use winapi::shared::lmcons::NET_API_STATUS;
-use windows_service::service::{
-    ServiceAccess, ServiceControl, ServiceControlAccept, ServiceErrorControl, ServiceExitCode,
-    ServiceInfo, ServiceStartType, ServiceState, ServiceType,
-};
-
-use windows_service::service_manager::{ServiceManager, ServiceManagerAccess};
-use windows_service::service_control_handler::{
-    self, ServiceControlHandlerResult
-};
-
-
-const USER_PRIV_USER: u32 = 1;
-const UF_SCRIPT: u32 = 0x0001;
-const NERR_SUCCESS: u32 = 0;
-
-#[repr(C)]
-struct USER_INFO_1 {
-    usri1_name: *mut u16,
-    usri1_password: *mut u16,
-    usri1_priv: u32,
-    usri1_home_dir: *mut u16,
-    usri1_comment: *mut u16,
-    usri1_flags: u32,
-    usri1_script_path: *mut u16,
-    usri1_password_age: u32,
-}
-
-pub fn winstr(value: &str) -> Vec<u16> {
-    std::ffi::OsStr::new(value).encode_wide().chain(once(0)).collect()
-}
-
-// Define NetUserAdd function
-extern "system" {
-    fn NetUserAdd(
-        servername: *mut u16,
-        level: u32,
-        buf: *mut std::ffi::c_void,
-        parm_err: *mut u32,
-    ) -> u32;
-}
-
-
-pub fn set_user(user_name: &str, password: &str) -> u32 {
-    let mut username = winstr(user_name);
-    let mut password = winstr(password);
-
-    let mut user = USER_INFO_1 {
-        usri1_name: username.as_mut_ptr(),
-        usri1_password: password.as_mut_ptr(),
-        usri1_priv: USER_PRIV_USER,
-        usri1_home_dir: null_mut(),
-        usri1_comment: null_mut(),
-        usri1_flags: UF_SCRIPT,
-        usri1_script_path: null_mut(),
-        usri1_password_age: 0,
+#[cfg(windows)]
+mod ping_service {
+    use std::{
+        ffi::OsString,
+        net::{IpAddr, SocketAddr, UdpSocket},
+        sync::mpsc,
+        time::Duration,
+    };
+    use windows_service::{
+        define_windows_service,
+        service::{
+            ServiceControl, ServiceControlAccept, ServiceExitCode, ServiceState, ServiceStatus,
+            ServiceType
+        },
+        service_control_handler::{self, ServiceControlHandlerResult},
+        service_dispatcher, Result,
     };
 
-    let mut error = 0;
-    unsafe {
-        let add_user_result = NetUserAdd(
-            null_mut(),
-            1,
-            &mut user as *mut _ as *mut std::ffi::c_void,
-            &mut error,
-        );
-        if add_user_result != NERR_SUCCESS {
-            eprintln!(
-                "Failed to add user: error code {}, extended error code {}",
-                add_user_result, error
-            );
-            return add_user_result;
+    const SERVICE_NAME: &str = "Russel";
+    const SERVICE_TYPE: ServiceType = ServiceType::OWN_PROCESS;
+
+    const LOOPBACK_ADDR: [u8; 4] = [127, 0, 0, 1];
+    const RECEIVER_PORT: u16 = 1234;
+    const PING_MESSAGE: &str = "ping\n";
+
+    pub fn run() -> Result<()> {
+        // Register generated `ffi_service_main` with the system and start the service, blocking
+        // this thread until the service is stopped.
+        service_dispatcher::start(SERVICE_NAME, ffi_service_main)
+    }
+
+    // Generate the windows service boilerplate.
+    // The boilerplate contains the low-level service entry function (ffi_service_main) that parses
+    // incoming service arguments into Vec<OsString> and passes them to user defined service
+    // entry (my_service_main).
+    define_windows_service!(ffi_service_main, my_service_main);
+
+    // Service entry function which is called on background thread by the system with service
+    // parameters. There is no stdout or stderr at this point so make sure to configure the log
+    // output to file if needed.
+    pub fn my_service_main(_arguments: Vec<OsString>) {
+        if let Err(_e) = run_service() {
+            // Handle the error, by logging or something.
         }
     }
-    NERR_SUCCESS
+
+    pub fn run_service() -> Result<()> {
+        // Create a channel to be able to poll a stop event from the service worker loop.
+        let (shutdown_tx, shutdown_rx) = mpsc::channel();
+
+        // Define system service event handler that will be receiving service events.
+        let event_handler = move |control_event| -> ServiceControlHandlerResult {
+            match control_event {
+                // Notifies a service to report its current status information to the service
+                // control manager. Always return NoError even if not implemented.
+                ServiceControl::Interrogate => ServiceControlHandlerResult::NoError,
+
+                // Handle stop
+                ServiceControl::Stop => {
+                    shutdown_tx.send(()).unwrap();
+                    ServiceControlHandlerResult::NoError
+                }
+
+                // treat the UserEvent as a stop request
+                ServiceControl::UserEvent(code) => {
+                    if code.to_raw() == 130 {
+                        shutdown_tx.send(()).unwrap();
+                    }
+                    ServiceControlHandlerResult::NoError
+                }
+
+                _ => ServiceControlHandlerResult::NotImplemented,
+            }
+        };
+
+        // Register system service event handler.
+        // The returned status handle should be used to report service status changes to the system.
+        let status_handle = service_control_handler::register(SERVICE_NAME, event_handler)?;
+
+        // Tell the system that service is running
+        status_handle.set_service_status(windows_service::service::ServiceStatus {
+            service_type: SERVICE_TYPE,
+            current_state: ServiceState::Running,
+            controls_accepted: ServiceControlAccept::STOP,
+            exit_code: ServiceExitCode::Win32(0),
+            checkpoint: 0,
+            wait_hint: Duration::default(),
+            process_id: None,
+        })?;
+
+        // For demo purposes this service sends a UDP packet once a second.
+        let loopback_ip = IpAddr::from(LOOPBACK_ADDR);
+        let sender_addr = SocketAddr::new(loopback_ip, 0);
+        let receiver_addr = SocketAddr::new(loopback_ip, RECEIVER_PORT);
+        let msg = PING_MESSAGE.as_bytes();
+        let socket = UdpSocket::bind(sender_addr).unwrap();
+
+        loop {
+            let _ = socket.send_to(msg, receiver_addr);
+
+            // Poll shutdown event.
+            match shutdown_rx.recv_timeout(Duration::from_secs(1)) {
+                // Break the loop either upon stop or channel disconnect
+                Ok(_) | Err(mpsc::RecvTimeoutError::Disconnected) => break,
+
+                // Continue work if no events were received within the timeout
+                Err(mpsc::RecvTimeoutError::Timeout) => (),
+            };
+        }
+
+        // Tell the system that service has stopped.
+        status_handle.set_service_status(ServiceStatus {
+            service_type: SERVICE_TYPE,
+            current_state: ServiceState::Stopped,
+            controls_accepted: ServiceControlAccept::empty(),
+            exit_code: ServiceExitCode::Win32(0),
+            checkpoint: 0,
+            wait_hint: Duration::default(),
+            process_id: None,
+        })?;
+
+        Ok(())
+    }
 }
 
+/// /////////////
 
-const SERVICE_NAME: &str = "RusselCacheService";
-const SERVICE_DISPLAY_NAME: &str = "Russel Cache Service";
+const SERVICE_NAME: &str = "Russel";
+const SERVICE_DISPLAY_NAME: &str = "Russel Service";
 const SERVICE_DESCRIPTION: &str = "A service for managing Russel Cache";
 
 fn install_service() -> windows_service::Result<()> {
-    let manager_access = ServiceManagerAccess::CONNECT | ServiceManagerAccess::CREATE_SERVICE;
-    let service_manager = ServiceManager::local_computer(None::<&str>, manager_access)?;
+    let manager_access = windows_service::service_manager::ServiceManagerAccess::CONNECT | windows_service::service_manager::ServiceManagerAccess::CREATE_SERVICE;
+    let service_manager = windows_service::service_manager::ServiceManager::local_computer(None::<&str>, manager_access)?;
 
     let service_binary_path = std::env::current_exe().unwrap();
-    // let password: Option<OsString> = Some(OsString::from("QAZWSXEDCRFVTGBYHNUJMIK!@^%$#"));
-    // let account_name: Option<OsString> = Some(OsString::from("RusselCache"));
-    // let set_user_result =  set_user("RusselCacheServiceAccount", "QAZWSXEDCRFVTGBYHNUJMIK!@^%$#");
-    // if set_user_result == NERR_SUCCESS {
-    //     println!("User added successfully");
-    // } else {
-    //     println!("Failed to add user, error code: {}", set_user_result);
-    // }
     let service_info = windows_service::service::ServiceInfo {
         name: OsString::from(SERVICE_NAME),
         display_name: OsString::from(SERVICE_DISPLAY_NAME),
-        service_type: ServiceType::OWN_PROCESS,
-        start_type: ServiceStartType::AutoStart,
-        error_control: ServiceErrorControl::Ignore,
+        service_type: windows_service::service::ServiceType::OWN_PROCESS,
+        start_type: windows_service::service::ServiceStartType::AutoStart,
+        error_control: windows_service::service::ServiceErrorControl::Normal,
         executable_path: service_binary_path,
         launch_arguments: vec![],
         dependencies: vec![],
@@ -121,77 +161,34 @@ fn install_service() -> windows_service::Result<()> {
         account_password: None,
     };
 
-    service_manager.create_service(&service_info, ServiceAccess::START | ServiceAccess::STOP | ServiceAccess::DELETE)?;
+    let service = service_manager.create_service(&service_info, windows_service::service::ServiceAccess::CHANGE_CONFIG)?;
+    service.set_description("service for russel cache")?;
     
     Ok(())
 }
 
-fn start_service() -> windows_service::Result<()> {
-    let manager_access = ServiceManagerAccess::CONNECT;
-    let service_manager = ServiceManager::local_computer(None::<&str>, manager_access)?;
-    let service_access = ServiceAccess::START;
-    let service = service_manager.open_service(SERVICE_NAME, service_access)?;
-    let args: Vec<OsString> = Vec::new();
-    service.start(&args)?;
-    let event_handler = move |control_event| -> ServiceControlHandlerResult {
-        match control_event {
-            ServiceControl::Interrogate => ServiceControlHandlerResult::NoError,
-            _ => ServiceControlHandlerResult::NotImplemented,
-        }
-
-    };
-    let status_handle = service_control_handler::register(SERVICE_NAME, event_handler)?;
+fn start_service() -> windows_service:: Result<()> {
+    ping_service::run();
     Ok(())
 }
 
 
 fn stop_service() -> windows_service::Result<()> {
-    let manager_access = ServiceManagerAccess::CONNECT;
-    let service_manager = ServiceManager::local_computer(None::<&str>, manager_access)?;
-    let service_access = ServiceAccess::STOP;
+    let manager_access = windows_service::service_manager::ServiceManagerAccess::CONNECT;
+    let service_manager = windows_service::service_manager::ServiceManager::local_computer(None::<&str>, manager_access)?;
+    let service_access = windows_service::service::ServiceAccess::STOP;
     let service = service_manager.open_service(SERVICE_NAME, service_access)?;
     service.stop()?;
     Ok(())
 }
 
 fn delete_service() -> windows_service::Result<()> {
-    let manager_access = ServiceManagerAccess::CONNECT;
-    let service_manager = ServiceManager::local_computer(None::<&str>, manager_access)?;
-    let service_access = ServiceAccess::DELETE;
+    let manager_access = windows_service::service_manager::ServiceManagerAccess::CONNECT;
+    let service_manager = windows_service::service_manager::ServiceManager::local_computer(None::<&str>, manager_access)?;
+    let service_access = windows_service::service::ServiceAccess::DELETE;
     let service = service_manager.open_service(SERVICE_NAME, service_access)?;
     service.delete()?;
     Ok(())
-}
-
-fn ffi_service_main(arguments: Vec<OsString>) {
-    if let Err(e) = run_service(arguments) {
-        eprintln!("Service error: {:?}", e);
-        std::process::exit(1);
-    }
-}
-
-fn run_service(_arguments: Vec<OsString>) -> windows_service::Result<()> {
-    let status_handle = service_control_handler::register(SERVICE_NAME, move |control_event| {
-        match control_event {
-            ServiceControl::Stop => ServiceControlHandlerResult::NoError,
-            _ => ServiceControlHandlerResult::NotImplemented,
-        }
-    })?;
-
-    let initial_status = windows_service::service::ServiceStatus {
-        process_id: None,
-        service_type: ServiceType::OWN_PROCESS,
-        current_state: ServiceState::Running,
-        controls_accepted: ServiceControlAccept::STOP,
-        exit_code: ServiceExitCode::Win32(0),
-        checkpoint: 0,
-        wait_hint: Duration::from_secs(0),
-    };
-    status_handle.set_service_status(initial_status)?;
-
-    loop {
-        std::thread::sleep(Duration::from_secs(60));
-    }
 }
 
 pub fn handle_input(_cache: Arc<Mutex<Cache>>) {
@@ -228,7 +225,7 @@ pub fn handle_input(_cache: Arc<Mutex<Cache>>) {
             }
             ["--", "delete_service"] => {
                 match delete_service() {
-                    Ok(_) => println!("Service deleted successfully."),
+                    Ok(_) => println!("Service deleted successfully. restart your system for apply cahnge"),
                     Err(err) => eprintln!("Failed to delete service: {:?}", err),
                 }
             }
