@@ -1,9 +1,15 @@
 
-use std::ffi::OsString;
 use std::io::{self, Write};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use std::thread;
+
+use std::ffi::{OsStr, OsString};
+use std::os::windows::ffi::{OsStrExt, OsStringExt};
+use std::ptr::null_mut;
+use std::mem::zeroed;
+use std::slice;
+use std::iter::once;
 
 use crate::cache::Cache;
 
@@ -17,34 +23,73 @@ use windows_service::service_manager::{ServiceManager, ServiceManagerAccess};
 use windows_service::service_control_handler::{
     self, ServiceControlHandlerResult
 };
-use winapi::um::lmaccess::{USER_INFO_1,NetUserAdd,UF_SCRIPT};
-use std::iter::once;
-use std::os::windows::ffi::OsStrExt;
-use std::ffi::OsStr;
+
+
+const USER_PRIV_USER: u32 = 1;
+const UF_SCRIPT: u32 = 0x0001;
+const NERR_SUCCESS: u32 = 0;
+
+#[repr(C)]
+struct USER_INFO_1 {
+    usri1_name: *mut u16,
+    usri1_password: *mut u16,
+    usri1_priv: u32,
+    usri1_home_dir: *mut u16,
+    usri1_comment: *mut u16,
+    usri1_flags: u32,
+    usri1_script_path: *mut u16,
+    usri1_password_age: u32,
+}
 
 pub fn winstr(value: &str) -> Vec<u16> {
-    OsStr::new(value).encode_wide().chain(once(0)).collect()
+    std::ffi::OsStr::new(value).encode_wide().chain(once(0)).collect()
 }
 
-pub fn set_user(user_name:&str,password:&str)-> u32 {
+// Define NetUserAdd function
+extern "system" {
+    fn NetUserAdd(
+        servername: *mut u16,
+        level: u32,
+        buf: *mut std::ffi::c_void,
+        parm_err: *mut u32,
+    ) -> u32;
+}
+
+
+pub fn set_user(user_name: &str, password: &str) -> u32 {
     let mut username = winstr(user_name);
     let mut password = winstr(password);
-    let mut user = USER_INFO_1{
-    usri1_name: username.as_mut_ptr(),
-    usri1_password: password.as_mut_ptr(),
-    usri1_priv: 1,
-    usri1_password_age: 0,
-    usri1_home_dir: std::ptr::null_mut(),
-    usri1_comment: std::ptr::null_mut(),
-    usri1_flags: UF_SCRIPT,
-    usri1_script_path: std::ptr::null_mut(),
+
+    let mut user = USER_INFO_1 {
+        usri1_name: username.as_mut_ptr(),
+        usri1_password: password.as_mut_ptr(),
+        usri1_priv: USER_PRIV_USER,
+        usri1_home_dir: null_mut(),
+        usri1_comment: null_mut(),
+        usri1_flags: UF_SCRIPT,
+        usri1_script_path: null_mut(),
+        usri1_password_age: 0,
     };
-    let mut error = 0 ;
-    unsafe{
-       let add_user_result =  NetUserAdd(std::ptr::null_mut(),1,&mut user as *mut _ as _,&mut error);
-    };
-    return error;
+
+    let mut error = 0;
+    unsafe {
+        let add_user_result = NetUserAdd(
+            null_mut(),
+            1,
+            &mut user as *mut _ as *mut std::ffi::c_void,
+            &mut error,
+        );
+        if add_user_result != NERR_SUCCESS {
+            eprintln!(
+                "Failed to add user: error code {}, extended error code {}",
+                add_user_result, error
+            );
+            return add_user_result;
+        }
+    }
+    NERR_SUCCESS
 }
+
 
 const SERVICE_NAME: &str = "RusselCacheService";
 const SERVICE_DISPLAY_NAME: &str = "Russel Cache Service";
@@ -55,24 +100,29 @@ fn install_service() -> windows_service::Result<()> {
     let service_manager = ServiceManager::local_computer(None::<&str>, manager_access)?;
 
     let service_binary_path = std::env::current_exe().unwrap();
-    let password: Option<OsString> = Some(OsString::from("QAZWSXEDCRFVTGBYHNUJMIK!@^%$#"));
-    let account_name: Option<OsString> = Some(OsString::from("RusselCacheServiceAccount"));
-    let set_user_result =  set_user("RusselCacheServiceAccount", "QAZWSXEDCRFVTGBYHNUJMIK!@^%$#");
-    println!("{:?}",set_user_result);
+    // let password: Option<OsString> = Some(OsString::from("QAZWSXEDCRFVTGBYHNUJMIK!@^%$#"));
+    // let account_name: Option<OsString> = Some(OsString::from("RusselCache"));
+    // let set_user_result =  set_user("RusselCacheServiceAccount", "QAZWSXEDCRFVTGBYHNUJMIK!@^%$#");
+    // if set_user_result == NERR_SUCCESS {
+    //     println!("User added successfully");
+    // } else {
+    //     println!("Failed to add user, error code: {}", set_user_result);
+    // }
     let service_info = windows_service::service::ServiceInfo {
         name: OsString::from(SERVICE_NAME),
         display_name: OsString::from(SERVICE_DISPLAY_NAME),
         service_type: ServiceType::OWN_PROCESS,
         start_type: ServiceStartType::AutoStart,
-        error_control: ServiceErrorControl::Normal,
+        error_control: ServiceErrorControl::Ignore,
         executable_path: service_binary_path,
         launch_arguments: vec![],
         dependencies: vec![],
-        account_name: account_name,
-        account_password: password,
+        account_name: None,
+        account_password: None,
     };
 
     service_manager.create_service(&service_info, ServiceAccess::START | ServiceAccess::STOP | ServiceAccess::DELETE)?;
+    
     Ok(())
 }
 

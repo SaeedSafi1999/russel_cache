@@ -14,11 +14,8 @@ pub fn set_user_path_environment_variable(path: &str) -> Result<()> {
     let mut path_value: String = env.get_value(key).map_or(String::from(""), |v| v);
     let path_exist = path_value.split(";").any(|v| v == path);
     if path_exist == false {
-        println!("{:?}", path_value);
         path_value.push_str(path);
-        println!("{:?}", path_value);
         env.set_value(key, &path_value).unwrap();
-
     }
 
     Ok(())
