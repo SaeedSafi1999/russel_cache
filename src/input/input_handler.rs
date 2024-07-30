@@ -139,31 +139,40 @@ mod ping_service {
 
 /// /////////////
 
-const SERVICE_NAME: &str = "Russel";
-const SERVICE_DISPLAY_NAME: &str = "Russel Service";
+const SERVICE_NAME: &str = "Russel_Cache";
+const SERVICE_DISPLAY_NAME: &str = "Russel_Service";
 const SERVICE_DESCRIPTION: &str = "A service for managing Russel Cache";
 
 fn install_service() -> windows_service::Result<()> {
-    let manager_access = windows_service::service_manager::ServiceManagerAccess::CONNECT | windows_service::service_manager::ServiceManagerAccess::CREATE_SERVICE;
-    let service_manager = windows_service::service_manager::ServiceManager::local_computer(None::<&str>, manager_access)?;
+    use windows_service::{
+        service::{ServiceAccess, ServiceErrorControl, ServiceInfo, ServiceStartType, ServiceType},
+        service_manager::{ServiceManager, ServiceManagerAccess},
+    };
 
-    let service_binary_path = std::env::current_exe().unwrap();
-    let service_info = windows_service::service::ServiceInfo {
+    let manager_access = ServiceManagerAccess::CONNECT | ServiceManagerAccess::CREATE_SERVICE;
+    let service_manager = ServiceManager::local_computer(None::<&str>, manager_access)?;
+
+    // This example installs the service defined in `examples/ping_service.rs`.
+    // In the real world code you would set the executable path to point to your own binary
+    // that implements windows service.
+    let service_binary_path = ::std::env::current_exe()
+        .unwrap()
+        .with_file_name("russel.exe");
+
+    let service_info = ServiceInfo {
         name: OsString::from(SERVICE_NAME),
         display_name: OsString::from(SERVICE_DISPLAY_NAME),
-        service_type: windows_service::service::ServiceType::OWN_PROCESS,
-        start_type: windows_service::service::ServiceStartType::AutoStart,
-        error_control: windows_service::service::ServiceErrorControl::Normal,
+        service_type: ServiceType::OWN_PROCESS,
+        start_type: ServiceStartType::OnDemand,
+        error_control: ServiceErrorControl::Normal,
         executable_path: service_binary_path,
         launch_arguments: vec![],
         dependencies: vec![],
-        account_name: None,
+        account_name: None, // run as System
         account_password: None,
     };
-
-    let service = service_manager.create_service(&service_info, windows_service::service::ServiceAccess::CHANGE_CONFIG)?;
-    service.set_description("service for russel cache")?;
-    
+    let service = service_manager.create_service(&service_info, ServiceAccess::CHANGE_CONFIG)?;
+    service.set_description("this is service for russel cache")?;
     Ok(())
 }
 
