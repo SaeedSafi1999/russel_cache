@@ -187,7 +187,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use winapi::um::winsvc::{
     StartServiceCtrlDispatcherW, RegisterServiceCtrlHandlerExW, SetServiceStatus,
     SERVICE_STATUS, SERVICE_TABLE_ENTRYW, SERVICE_ACCEPT_STOP, SERVICE_RUNNING,
-    SERVICE_STOPPED, SERVICE_START_PENDING, SERVICE_STOP_PENDING, SERVICE_CONTROL_STOP,
+    SERVICE_STOPPED, SERVICE_START_PENDING, SERVICE_CONTROL_STOP,
     SERVICE_CONTROL_INTERROGATE, SERVICE_STATUS_HANDLE, SERVICE_CONTROL_PAUSE, SERVICE_CONTROL_CONTINUE,
     SERVICE_CONTROL_SHUTDOWN, SERVICE_CONTROL_PARAMCHANGE,
     SERVICE_CONTROL_NETBINDADD, SERVICE_CONTROL_NETBINDREMOVE, SERVICE_CONTROL_NETBINDENABLE,
@@ -317,10 +317,7 @@ unsafe extern "system" fn service_control_handler(
 ) -> DWORD {
     match control {
         SERVICE_CONTROL_STOP => {
-            // Set the service flag to indicate it's stopping
             SERVICE_RUNNING_FLAG.store(false, Ordering::SeqCst);
-
-            // Inform the service control manager that the service is stopping
             return winapi::shared::winerror::NOERROR.try_into().unwrap();
         }
         SERVICE_CONTROL_PAUSE => {
