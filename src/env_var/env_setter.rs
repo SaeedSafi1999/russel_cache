@@ -7,7 +7,7 @@ pub fn set_user_environment_variable(key: &str, value: &str) -> Result<()> {
     env.set_value(&key, &value).unwrap();
     Ok(())
 }
-pub fn set_user_path_environment_variable(path: &str) -> Result<()> {
+pub fn set_user_path_environment_variable(path: &str) -> bool {
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
     let (env, _) = hkcu.create_subkey("Environment").unwrap();
     let key = "Path";
@@ -16,7 +16,7 @@ pub fn set_user_path_environment_variable(path: &str) -> Result<()> {
     if path_exist == false {
         path_value.push_str(path);
         env.set_value(key, &path_value).unwrap();
+        return true;
     }
-
-    Ok(())
+    return false;
 }

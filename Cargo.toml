@@ -5,9 +5,6 @@ edition = "2021"
 build = "build.rs"
 
 
-[[bin]]
-name = "russel"
-path = "src/russel/bin/main.rs"
 
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

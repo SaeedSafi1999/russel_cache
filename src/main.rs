@@ -1,37 +1,50 @@
 use std::sync::{Arc, Mutex};
+use std::thread;
 use crate::public_api::server;
 use local_ip_address::local_ip;
 use memory_handling::memory_handling::MemoryHandler;
-use crypto::crypto_service::VigenereCipher;
 mod cache;
 mod input;
 mod public_api;
 mod config;
 mod memory_handling;
-mod crypto;
 mod env_var;
-
+use std::env;
 use crate::config::Settings;
 use crate::input::handle_input;
-
 use cache::Cache;
 
-fn main(){
-    //set env vars
-    let exe_dir = std::env::current_dir().unwrap().join("target").join("debug");
-    env_var::env_setter::set_user_path_environment_variable( exe_dir.to_str().unwrap()).unwrap();
-    //reading configurations from config.json
+fn main() {
+    
+    println!("|============================================================================|");
+    println!("||  //////////  //     //   /////////   /////////    /////////    //        ||");
+    println!("||  //      //  //     //   //     /    //     /     //           //        ||");
+    println!("||  //     //   //     //   //          //           //           //        ||");
+    println!("||  ////////    //     //   /////////   /////////    /////////    //        ||");
+    println!("||  //     //   //     //          //          //    //           //        ||");
+    println!("||  //     //   //     //   /     //    /     //     //           //        ||");
+    println!("||  //     //   ////////   /////////   /////////     /////////    ///////// ||");
+    println!("|============================================================================|");
+    print!("
+    ");
+    
+    let args: Vec<String> = env::args().collect();
+    let main_args = args.last().unwrap();
+
+    // Reading configurations from config.json
     let settings: Settings = Settings::new();
-    let mut memory_handler = Arc::new(Mutex::new(MemoryHandler::new()));
-    let cache = Arc::new(Mutex::new(Cache::new(settings.port,memory_handler.clone()))); 
+    let memory_handler = Arc::new(Mutex::new(MemoryHandler::new()));
+    let cache = Arc::new(Mutex::new(Cache::new(settings.port, memory_handler.clone())));
     let local_sys_ip = local_ip().unwrap();
     let cache_clone = Arc::clone(&cache);
-        std::thread::spawn(move || {
-            actix_web::rt::System::new().block_on(async move {
-                let settings:Settings = Settings::new();
-                server::run_server(cache_clone,settings.port.to_string(),local_sys_ip.to_string()).await.unwrap();
-            });
+    
+    std::thread::spawn(move || {
+        actix_web::rt::System::new().block_on(async move {
+            let settings: Settings = Settings::new();
+            server::run_server(cache_clone, settings.port.to_string(), "127.0.0.1".to_string()).await.unwrap();
         });
-    handle_input(cache) ;
-}
+    });
+    
+    handle_input(cache, main_args.to_string());
 
+}
