@@ -1,11 +1,9 @@
-fn start_service() -> windows_service:: Result<()> {
-    let run_result = run().unwrap();
-    Ok(())
-}
 extern crate winapi;
-
+use std::os::windows::ffi::OsStrExt;
+use std::ptr::null_mut;
 use std::net::{IpAddr, SocketAddr, UdpSocket};
 use std::sync::mpsc;
+use std::ffi::OsString;
 use std::sync::atomic::{AtomicBool, Ordering};
 use winapi::um::winsvc::{
     StartServiceCtrlDispatcherW, RegisterServiceCtrlHandlerExW, SetServiceStatus,
@@ -22,44 +20,69 @@ use winapi::shared::winerror::ERROR_CALL_NOT_IMPLEMENTED;
 use winapi::um::winnt::SERVICE_WIN32_OWN_PROCESS;
 
 
-const SERVICE_NAME: &str = "Russel";
+const SERVICE_NAME: &str = "russel";
 const SERVICE_DISPLAY_NAME:&str ="this service for running russel cache application";
 const LOOPBACK_ADDR: [u8; 4] = [127, 0, 0, 1];
-const SENDER_PORT :u16 = 5022;
+const SENDER_PORT :u16 = 1234;
 const RECEIVER_PORT: u16 = 8080;
 const PING_MESSAGE: &str = "ping";
 static SERVICE_RUNNING_FLAG: AtomicBool = AtomicBool::new(false);
 
 pub fn install_service() -> windows_service::Result<()> {
-        use windows_service::{
-            service::{ServiceAccess, ServiceErrorControl, ServiceInfo, ServiceStartType, ServiceType},
-            service_manager::{ServiceManager, ServiceManagerAccess},
-        };
-    
-        let manager_access = ServiceManagerAccess::CONNECT | ServiceManagerAccess::CREATE_SERVICE;
-        let service_manager = ServiceManager::local_computer(None::<&str>, manager_access)?;
-        let service_binary_path = ::std::env::current_exe().unwrap();
-        println!("{:?}",service_binary_path);
-    
-        let service_info = ServiceInfo {
-            name: OsString::from(SERVICE_NAME),
-            display_name: OsString::from(SERVICE_DISPLAY_NAME),
-            service_type: ServiceType::OWN_PROCESS,
-            start_type: ServiceStartType::AutoStart,
-            error_control: ServiceErrorControl::Normal,
-            executable_path: service_binary_path,
-            launch_arguments: vec![],
-            dependencies: vec![],
-            account_name: None, // run as System
-            account_password: None,
-        };
-        let service = service_manager.create_service(&service_info, ServiceAccess::CHANGE_CONFIG)?;
-        service.set_description("this service runs russel cache and check health of application")?;
-        Ok(())
-    }
-    
 
-pub fn run() -> Result<(), u32> {
+    use windows_service::{
+        service::{ServiceAccess, ServiceErrorControl, ServiceInfo, ServiceStartType, ServiceType},
+        service_manager::{ServiceManager, ServiceManagerAccess},
+    };
+
+    let manager_access = ServiceManagerAccess::CONNECT | ServiceManagerAccess::CREATE_SERVICE;
+    let service_manager = ServiceManager::local_computer(None::<&str>, manager_access)?;
+    let service_binary_path = ::std::env::current_exe().unwrap();    
+    let service_info = ServiceInfo {
+        name: OsString::from(SERVICE_NAME),
+        display_name: OsString::from(SERVICE_DISPLAY_NAME),
+        service_type: ServiceType::OWN_PROCESS,
+        start_type: ServiceStartType::AutoStart,
+        error_control: ServiceErrorControl::Normal,
+        executable_path: service_binary_path,
+        launch_arguments: vec![],
+        dependencies: vec![],
+        account_name: None, // run as System
+        account_password: None,
+    };
+    let service = service_manager.create_service(&service_info, ServiceAccess::CHANGE_CONFIG)?;
+    service.set_description("this service runs russel cache and check health of application")?;
+    Ok(())
+}
+
+
+pub fn start_service() -> windows_service:: Result<()> {
+    let run_result = run().unwrap();
+    Ok(())
+}
+
+
+pub fn stop_service() -> windows_service::Result<()> {
+    let manager_access = windows_service::service_manager::ServiceManagerAccess::CONNECT;
+    let service_manager = windows_service::service_manager::ServiceManager::local_computer(None::<&str>, manager_access)?;
+    let service_access = windows_service::service::ServiceAccess::STOP;
+    let service = service_manager.open_service(SERVICE_NAME, service_access)?;
+    service.stop()?;
+    Ok(())
+}
+
+pub fn delete_service() -> windows_service::Result<()> {
+    let manager_access = windows_service::service_manager::ServiceManagerAccess::CONNECT;
+    let service_manager = windows_service::service_manager::ServiceManager::local_computer(None::<&str>, manager_access)?;
+    let service_access = windows_service::service::ServiceAccess::DELETE;
+    let service = service_manager.open_service(SERVICE_NAME, service_access)?;
+    service.delete()?;
+    Ok(())
+}
+
+
+
+ fn run() -> Result<(), u32> {
     let service_name: Vec<u16> = OsString::from(SERVICE_NAME).encode_wide().chain(Some(0)).collect();
     let service_table: [SERVICE_TABLE_ENTRYW; 2] = [
         SERVICE_TABLE_ENTRYW {
@@ -165,7 +188,7 @@ unsafe extern "system" fn service_control_handler(
     }
 }
 
-pub fn run_service(service_status_handle: SERVICE_STATUS_HANDLE) -> Result<(), u32> {
+fn run_service(service_status_handle: SERVICE_STATUS_HANDLE) -> Result<(), u32> {
     // Create a channel to be able to poll a stop event from the service worker loop.
     let (shutdown_tx, shutdown_rx) = mpsc::channel();
     // For demo purposes this service sends a UDP packet once a second.
@@ -180,7 +203,7 @@ pub fn run_service(service_status_handle: SERVICE_STATUS_HANDLE) -> Result<(), u
         let _ = socket.send_to(msg, receiver_addr);
         
         // Poll shutdown event.
-        match shutdown_rx.recv_timeout(Duration::from_secs(1)) {
+        match shutdown_rx.recv_timeout(std::time::Duration::from_secs(1)) {
             // Break the loop either upon stop or channel disconnect
             Ok(_) | Err(mpsc::RecvTimeoutError::Disconnected) => break,
 
@@ -189,23 +212,5 @@ pub fn run_service(service_status_handle: SERVICE_STATUS_HANDLE) -> Result<(), u
         };
     }
 
-    Ok(())
-}
-
-pub fn stop_service() -> windows_service::Result<()> {
-    let manager_access = windows_service::service_manager::ServiceManagerAccess::CONNECT;
-    let service_manager = windows_service::service_manager::ServiceManager::local_computer(None::<&str>, manager_access)?;
-    let service_access = windows_service::service::ServiceAccess::STOP;
-    let service = service_manager.open_service(SERVICE_NAME, service_access)?;
-    service.stop()?;
-    Ok(())
-}
-
-pub fn delete_service() -> windows_service::Result<()> {
-    let manager_access = windows_service::service_manager::ServiceManagerAccess::CONNECT;
-    let service_manager = windows_service::service_manager::ServiceManager::local_computer(None::<&str>, manager_access)?;
-    let service_access = windows_service::service::ServiceAccess::DELETE;
-    let service = service_manager.open_service(SERVICE_NAME, service_access)?;
-    service.delete()?;
     Ok(())
 }

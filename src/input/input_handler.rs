@@ -1,9 +1,7 @@
-use windows_service_manager;
 use std::io::{self, Write};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use std::thread;
-
 use std::ffi::{OsStr, OsString};
 use std::os::windows::ffi::{OsStrExt, OsStringExt};
 use std::ptr::null_mut;
@@ -12,6 +10,7 @@ use std::slice;
 use std::iter::once;
 use crate::cache::Cache;
 use crate::env_var::env_setter;
+use crate::service_managment::windows_service_manager::{delete_service,install_service,stop_service,start_service};
 
 
 
@@ -34,6 +33,8 @@ pub fn handle_input(_cache: Arc<Mutex<Cache>>,mut args:String) {
                     Ok(_) => println!("* Service installed successfully."),
                     Err(err) => eprintln!("____Failed to install service: {:?}", err),
                 }
+            }
+            "start_service" =>{
                 match start_service() {
                     Ok(_) => println!("* Service run successfully."),
                     Err(err) => eprintln!("___Failed to start service: {:?}", err),
@@ -51,7 +52,7 @@ pub fn handle_input(_cache: Arc<Mutex<Cache>>,mut args:String) {
                     Err(err) => eprintln!("____Failed to delete service: {:?}", err),
                 }
             }
-            _ => println!("Invalid command. Use 'install_service', 'stop_service','set_variable' or 'delete_service'."),
+            _ => println!("Invalid command. Use 'start_service' '-- install_service', '--stop_service','--set_variable' or '--delete_service'."),
         }
 }
 
@@ -60,3 +61,4 @@ fn print_prompt() {
     print!("> ");
     io::stdout().flush().unwrap();
 }
+

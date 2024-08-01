@@ -9,6 +9,7 @@ mod public_api;
 mod config;
 mod memory_handling;
 mod env_var;
+mod service_managment;
 use std::env;
 use crate::config::Settings;
 use crate::input::handle_input;
@@ -35,7 +36,6 @@ fn main() {
     let settings: Settings = Settings::new();
     let memory_handler = Arc::new(Mutex::new(MemoryHandler::new()));
     let cache = Arc::new(Mutex::new(Cache::new(settings.port, memory_handler.clone())));
-    let local_sys_ip = local_ip().unwrap();
     let cache_clone = Arc::clone(&cache);
     
     std::thread::spawn(move || {
