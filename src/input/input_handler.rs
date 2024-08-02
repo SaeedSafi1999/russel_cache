@@ -1,4 +1,5 @@
 use std::io::{self, Write};
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use std::thread;
@@ -8,6 +9,8 @@ use std::ptr::null_mut;
 use std::mem::zeroed;
 use std::slice;
 use std::iter::once;
+use serde::de::IntoDeserializer;
+
 use crate::cache::Cache;
 use crate::env_var::env_setter;
 use crate::service_managment::windows_service_manager::{delete_service,install_service,stop_service,start_service};
@@ -18,15 +21,14 @@ pub fn handle_input(_cache: Arc<Mutex<Cache>>,mut args:String) {
    
         match args.as_str() {
             "set_variable" =>{
+                let mut exe_dir:PathBuf = PathBuf::new();
                 // Set environment variables
-                let mut exe_env = "";
                 if cfg!(debug_assertions) {
-                    exe_env = "debug";
+                 exe_dir = std::env::current_dir().unwrap().join("target").join("debug");  
                 }
                 else {
-                    exe_env = "release";
+                 exe_dir = std::env::current_dir().unwrap(); 
                 }
-                 let exe_dir = std::env::current_dir().unwrap().join("target").join(exe_env);
                  let env_setter_result =  env_setter::set_user_path_environment_variable(exe_dir.to_str().unwrap());
                  if env_setter_result.unwrap() == true{
                     println!("* Environment variable set successfully");
