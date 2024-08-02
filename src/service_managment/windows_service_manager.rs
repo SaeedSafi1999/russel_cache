@@ -20,7 +20,7 @@ use winapi::shared::winerror::ERROR_CALL_NOT_IMPLEMENTED;
 use winapi::um::winnt::SERVICE_WIN32_OWN_PROCESS;
 
 
-const SERVICE_NAME: &str = "russel";
+const SERVICE_NAME: &str = "888";
 const SERVICE_DISPLAY_NAME:&str ="this service for running russel cache application";
 const LOOPBACK_ADDR: [u8; 4] = [127, 0, 0, 1];
 const SENDER_PORT :u16 = 1234;
