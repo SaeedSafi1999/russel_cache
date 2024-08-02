@@ -19,9 +19,16 @@ pub fn handle_input(_cache: Arc<Mutex<Cache>>,mut args:String) {
         match args.as_str() {
             "set_variable" =>{
                 // Set environment variables
-                 let exe_dir = std::env::current_dir().unwrap().join("target").join("debug");
+                let mut exe_env = "";
+                if cfg!(debug_assertions) {
+                    exe_env = "debug";
+                }
+                else {
+                    exe_env = "release";
+                }
+                 let exe_dir = std::env::current_dir().unwrap().join("target").join(exe_env);
                  let env_setter_result =  env_setter::set_user_path_environment_variable(exe_dir.to_str().unwrap());
-                 if env_setter_result == true{
+                 if env_setter_result.unwrap() == true{
                     println!("* Environment variable set successfully");
                  }
                  else{
