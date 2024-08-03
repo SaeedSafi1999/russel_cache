@@ -96,15 +96,4 @@ impl Cache {
         self.port
     }
     
-
-    fn check_memory_limit(&self) {
-        let memory_handler = self.memory_handler.lock().unwrap();
-        if memory_handler.is_memory_limit_finished() {
-            Notification::new()
-                .summary("Memory Limit Exceeded")
-                .body("The memory usage has exceeded the configured limit.")
-                .show()
-                .unwrap();
-        }
-    }
 }
