@@ -4,7 +4,7 @@ use notify_rust::Notification;
 
 use crate::memory_handling;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Cache {
     store: Arc<Mutex<HashMap<String, HashMap<String, Vec<u8>>>>>,
     port: u16,

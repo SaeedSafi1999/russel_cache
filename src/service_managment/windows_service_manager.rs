@@ -16,8 +16,8 @@ use winapi::shared::minwindef::{DWORD, LPVOID, TRUE};
 use winapi::um::errhandlingapi::GetLastError;
 use winapi::shared::winerror::ERROR_CALL_NOT_IMPLEMENTED;
 const SERVICE_WIN32_OWN_PROCESS: DWORD = 0x00000010;
-const SERVICE_NAME: &str = "test37";
-const SERVICE_DISPLAY_NAME: &str = "test37";
+const SERVICE_NAME: &str = "test51";
+const SERVICE_DISPLAY_NAME: &str = "test51";
 const LOOPBACK_ADDR: [u8; 4] = [127, 0, 0, 1];
 const SENDER_PORT: u16 = 1234;
 const RECEIVER_PORT: u16 = 8080;
@@ -115,7 +115,7 @@ unsafe extern "system" fn service_main(_argc: DWORD, _argv: *mut *mut u16) {
     let mut service_status = SERVICE_STATUS {
         dwServiceType: SERVICE_WIN32_OWN_PROCESS,
         dwCurrentState: SERVICE_START_PENDING,
-        dwControlsAccepted: 0,
+        dwControlsAccepted: 1,
         dwWin32ExitCode: 0,
         dwServiceSpecificExitCode: 0,
         dwCheckPoint: 0,
@@ -154,15 +154,23 @@ unsafe extern "system" fn service_control_handler(
         SERVICE_CONTROL_STOP => {
             SERVICE_RUNNING_FLAG.store(false, Ordering::SeqCst);
             return winapi::shared::winerror::NOERROR as DWORD;
+            println!("SERVICE_CONTROL_STOP");
+        }
+        SERVICE_ACTIVE => {
+            println!("SERVICE_ACTIVE");
+            SERVICE_RUNNING_FLAG.store(true, Ordering::SeqCst);
+            return winapi::shared::winerror::NOERROR as DWORD;
         }
         SERVICE_CONTROL_PAUSE => {
             return winapi::shared::winerror::NOERROR as DWORD;
+            
         }
         SERVICE_CONTROL_CONTINUE => {
             return winapi::shared::winerror::NOERROR as DWORD;
         }
         SERVICE_CONTROL_INTERROGATE => {
             return winapi::shared::winerror::NOERROR as DWORD;
+            println!("SERVICE_CONTROL_INTERROGATE");
         }
         SERVICE_CONTROL_SHUTDOWN => {
             SERVICE_RUNNING_FLAG.store(false, Ordering::SeqCst);
@@ -190,7 +198,7 @@ fn run_service(service_status_handle: SERVICE_STATUS_HANDLE) -> Result<(), u32> 
         let _ = socket.send_to(msg, receiver_addr);
 
         // Poll shutdown event.
-        match shutdown_rx.recv_timeout(std::time::Duration::from_secs(1)) {
+        match shutdown_rx.recv_timeout(std::time::Duration::from_secs(80)) {
             Ok(_) | Err(mpsc::RecvTimeoutError::Disconnected) => break,
             Err(mpsc::RecvTimeoutError::Timeout) => (),
         };
