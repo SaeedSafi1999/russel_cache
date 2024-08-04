@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use notify_rust::Notification;
 
 use crate::memory_handling;
 

@@ -10,10 +10,7 @@ build = "build.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-base64 = "0.22"
 winreg = "0.52.0"
-local-ip-address = "0.6.1"
-notify-rust = "4.5.1"
 winapi = { version = "0.3.9", features = ["lmaccess","winuser","processenv","winnt","winsvc","errhandlingapi", "winerror"] }
 windows-service = "0.7"
 actix-web = "4.0"

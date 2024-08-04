@@ -52,7 +52,7 @@ pub fn handle_input(_cache: Arc<Mutex<Cache>>,mut args:String) {
                     Err(err) => eprintln!("____Failed to delete service: {:?}", err),
                 }
             }
-            _ => println!("Invalid command. Use 'start_service' '-- install_service', '--stop_service','--set_variable' or '--delete_service'."),
+            _ => println!("Invalid command. Use '-- start_service' '-- install_service', '--stop_service','--set_variable' or '--delete_service'."),
         }
 }
 

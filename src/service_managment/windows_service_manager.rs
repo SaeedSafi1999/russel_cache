@@ -114,8 +114,8 @@ unsafe extern "system" fn service_main(_argc: DWORD, _argv: *mut *mut u16) {
     // Set the service status to start pending
     let mut service_status = SERVICE_STATUS {
         dwServiceType: SERVICE_WIN32_OWN_PROCESS,
-        dwCurrentState: SERVICE_START_PENDING,
-        dwControlsAccepted: 1,
+        dwCurrentState: SERVICE_RUNNING,
+        dwControlsAccepted: 0,
         dwWin32ExitCode: 0,
         dwServiceSpecificExitCode: 0,
         dwCheckPoint: 0,

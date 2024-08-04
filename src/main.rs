@@ -1,7 +1,6 @@
 use std::sync::{Arc, Mutex};
 use std::thread;
 use crate::public_api::server;
-use local_ip_address::local_ip;
 use memory_handling::memory_handling::MemoryHandler;
 mod cache;
 mod input;
@@ -16,7 +15,8 @@ use crate::input::handle_input;
 use cache::Cache;
 
 fn main() {
-    
+    println!("
+    ");
     println!("|============================================================================|");
     println!("||  //////////  //     //   /////////   /////////    /////////    //        ||");
     println!("||  //      //  //     //   //     /    //     /     //           //        ||");
@@ -26,7 +26,7 @@ fn main() {
     println!("||  //     //   //     //   /     //    /     //     //           //        ||");
     println!("||  //     //   ////////   /////////   /////////     /////////    ///////// ||");
     println!("|============================================================================|");
-    print!("
+    println!("
     ");
     
     let args: Vec<String> = env::args().collect();
@@ -44,9 +44,6 @@ fn main() {
             server::run_server(cache_clone, settings.port.to_string(), "127.0.0.1".to_string()).await.unwrap();
         });
     });
-    loop{
-        
-    }
-   // handle_input(cache, main_args.to_string());
+    handle_input(cache, main_args.to_string());
 
 }
