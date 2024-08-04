@@ -44,6 +44,12 @@ fn main() {
             server::run_server(cache_clone, settings.port.to_string(), "127.0.0.1".to_string()).await.unwrap();
         });
     });
-    handle_input(cache, main_args.to_string());
+    println!("{:?}",main_args);
+    if args.len() > 1{
+        handle_input(cache, main_args.to_string());
+    }
+    loop {
+        std::thread::park();
+    }
 
 }

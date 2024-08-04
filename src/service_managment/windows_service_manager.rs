@@ -7,17 +7,14 @@ use std::ptr::null_mut;
 use std::sync::mpsc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use winapi::um::winsvc::{
-    StartServiceCtrlDispatcherW, RegisterServiceCtrlHandlerExW, SetServiceStatus,
-    SERVICE_STATUS, SERVICE_TABLE_ENTRYW, SERVICE_ACCEPT_STOP, SERVICE_RUNNING,
-    SERVICE_STOPPED, SERVICE_START_PENDING, SERVICE_CONTROL_STOP,
-    SERVICE_CONTROL_INTERROGATE, SERVICE_STATUS_HANDLE,
+    RegisterServiceCtrlHandlerExW, SetServiceStatus, StartServiceCtrlDispatcherW, SERVICE_ACCEPT_STOP, SERVICE_ACTIVE, SERVICE_CONTROL_INTERROGATE, SERVICE_CONTROL_PAUSE, SERVICE_CONTROL_SHUTDOWN, SERVICE_CONTROL_STOP, SERVICE_RUNNING, SERVICE_START_PENDING, SERVICE_STATUS, SERVICE_STATUS_HANDLE, SERVICE_STOPPED, SERVICE_TABLE_ENTRYW
 };
 use winapi::shared::minwindef::{DWORD, LPVOID, TRUE};
 use winapi::um::errhandlingapi::GetLastError;
 use winapi::shared::winerror::ERROR_CALL_NOT_IMPLEMENTED;
 const SERVICE_WIN32_OWN_PROCESS: DWORD = 0x00000010;
-const SERVICE_NAME: &str = "test51";
-const SERVICE_DISPLAY_NAME: &str = "test51";
+const SERVICE_NAME: &str = "Rusel_Cache_Service3";
+const SERVICE_DISPLAY_NAME: &str = "russel cache services";
 const LOOPBACK_ADDR: [u8; 4] = [127, 0, 0, 1];
 const SENDER_PORT: u16 = 1234;
 const RECEIVER_PORT: u16 = 8080;
@@ -114,7 +111,7 @@ unsafe extern "system" fn service_main(_argc: DWORD, _argv: *mut *mut u16) {
     // Set the service status to start pending
     let mut service_status = SERVICE_STATUS {
         dwServiceType: SERVICE_WIN32_OWN_PROCESS,
-        dwCurrentState: SERVICE_RUNNING,
+        dwCurrentState: SERVICE_START_PENDING,
         dwControlsAccepted: 0,
         dwWin32ExitCode: 0,
         dwServiceSpecificExitCode: 0,
@@ -161,19 +158,27 @@ unsafe extern "system" fn service_control_handler(
             SERVICE_RUNNING_FLAG.store(true, Ordering::SeqCst);
             return winapi::shared::winerror::NOERROR as DWORD;
         }
-        SERVICE_CONTROL_PAUSE => {
+        SERVICE_CONTROL_STOP => {
+            println!("SERVICE_CONTROL_STOP");
             return winapi::shared::winerror::NOERROR as DWORD;
             
         }
-        SERVICE_CONTROL_CONTINUE => {
+        SERVICE_CONTROL_PAUSE => {
+            println!("SERVICE_CONTROL_PAUSE");
             return winapi::shared::winerror::NOERROR as DWORD;
         }
         SERVICE_CONTROL_INTERROGATE => {
-            return winapi::shared::winerror::NOERROR as DWORD;
             println!("SERVICE_CONTROL_INTERROGATE");
+            return winapi::shared::winerror::NOERROR as DWORD;
         }
         SERVICE_CONTROL_SHUTDOWN => {
+            println!("SERVICE_CONTROL_SHUTDOWN");
             SERVICE_RUNNING_FLAG.store(false, Ordering::SeqCst);
+            return winapi::shared::winerror::NOERROR as DWORD;
+        }
+        SERVICE_RUNNING => {
+            println!("SERVICE_RUNNING");
+            SERVICE_RUNNING_FLAG.store(true, Ordering::SeqCst);
             return winapi::shared::winerror::NOERROR as DWORD;
         }
         _ => {
