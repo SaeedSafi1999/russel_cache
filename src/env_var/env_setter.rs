@@ -1,4 +1,3 @@
-use std::io::Result;
 use winreg::{enums::*, RegKey};
 
 pub fn set_user_path_environment_variable(path: &str) -> std::io::Result<bool> {

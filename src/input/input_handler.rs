@@ -1,15 +1,6 @@
 use std::io::{self, Write};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
-use std::thread;
-use std::ffi::{OsStr, OsString};
-use std::os::windows::ffi::{OsStrExt, OsStringExt};
-use std::ptr::null_mut;
-use std::mem::zeroed;
-use std::slice;
-use std::iter::once;
-use serde::de::IntoDeserializer;
 
 use crate::cache::Cache;
 use crate::env_var::env_setter;

@@ -23,10 +23,6 @@ impl MemoryHandler {
         self.current_memory = self.current_memory.saturating_sub(memory_to_free);
     }
 
-    pub fn total_memory(&self) -> usize {
-        self.current_memory
-    }
-
     pub fn is_memory_limit_finished(&self) -> bool {
         return self.current_memory > self.memory_size_limit ;
     }
