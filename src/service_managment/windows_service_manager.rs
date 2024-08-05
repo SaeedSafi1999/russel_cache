@@ -13,7 +13,7 @@ use winapi::shared::minwindef::{DWORD, LPVOID, TRUE};
 use winapi::um::errhandlingapi::GetLastError;
 use winapi::shared::winerror::ERROR_CALL_NOT_IMPLEMENTED;
 const SERVICE_WIN32_OWN_PROCESS: DWORD = 0x00000010;
-const SERVICE_NAME: &str = "Rusel_Cache_Service3";
+const SERVICE_NAME: &str = "Rusel_Cache_Service5";
 const SERVICE_DISPLAY_NAME: &str = "russel cache services";
 const LOOPBACK_ADDR: [u8; 4] = [127, 0, 0, 1];
 const SENDER_PORT: u16 = 1234;
@@ -151,33 +151,26 @@ unsafe extern "system" fn service_control_handler(
         SERVICE_CONTROL_STOP => {
             SERVICE_RUNNING_FLAG.store(false, Ordering::SeqCst);
             return winapi::shared::winerror::NOERROR as DWORD;
-            println!("SERVICE_CONTROL_STOP");
         }
         SERVICE_ACTIVE => {
-            println!("SERVICE_ACTIVE");
             SERVICE_RUNNING_FLAG.store(true, Ordering::SeqCst);
             return winapi::shared::winerror::NOERROR as DWORD;
         }
         SERVICE_CONTROL_STOP => {
-            println!("SERVICE_CONTROL_STOP");
             return winapi::shared::winerror::NOERROR as DWORD;
             
         }
         SERVICE_CONTROL_PAUSE => {
-            println!("SERVICE_CONTROL_PAUSE");
             return winapi::shared::winerror::NOERROR as DWORD;
         }
         SERVICE_CONTROL_INTERROGATE => {
-            println!("SERVICE_CONTROL_INTERROGATE");
             return winapi::shared::winerror::NOERROR as DWORD;
         }
         SERVICE_CONTROL_SHUTDOWN => {
-            println!("SERVICE_CONTROL_SHUTDOWN");
             SERVICE_RUNNING_FLAG.store(false, Ordering::SeqCst);
             return winapi::shared::winerror::NOERROR as DWORD;
         }
         SERVICE_RUNNING => {
-            println!("SERVICE_RUNNING");
             SERVICE_RUNNING_FLAG.store(true, Ordering::SeqCst);
             return winapi::shared::winerror::NOERROR as DWORD;
         }

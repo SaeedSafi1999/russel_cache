@@ -2,6 +2,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use crate::public_api::server;
 use memory_handling::memory_handling::MemoryHandler;
+use service_managment::windows_service_manager;
 mod cache;
 mod input;
 mod public_api;
@@ -44,12 +45,26 @@ fn main() {
             server::run_server(cache_clone, settings.port.to_string(), "127.0.0.1".to_string()).await.unwrap();
         });
     });
-    println!("{:?}",main_args);
+   
     if args.len() > 1{
-        handle_input(cache, main_args.to_string());
+        match windows_service_manager::install_service() {
+            Ok(_) => {
+                println!("* Service installed successfully.");
+                std::thread::sleep(std::time::Duration::from_secs(3));
+                std::process::exit(0)
+            },
+            Err(err) =>{
+                
+                eprintln!("____Failed to install service: {:?}", err);
+                std::process::exit(0)
+            } ,
+        }
     }
-    loop {
-        std::thread::park();
-    }
+
+    std::thread::park();
+
+    // loop {
+    //     std::thread::park();
+    // }
 
 }
