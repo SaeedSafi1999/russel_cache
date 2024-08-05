@@ -12,7 +12,7 @@ mod env_var;
 mod service_managment;
 use std::env;
 use crate::config::Settings;
-use crate::input::handle_input;
+//use crate::input::handle_input;
 use cache::Cache;
 
 fn main() {
@@ -47,18 +47,23 @@ fn main() {
     });
    
     if args.len() > 1{
-        match windows_service_manager::install_service() {
-            Ok(_) => {
-                println!("* Service installed successfully.");
-                std::thread::sleep(std::time::Duration::from_secs(3));
-                std::process::exit(0)
-            },
-            Err(err) =>{
+        // match windows_service_manager::install_service() {
+        //     Ok(_) => {
+        //         println!("* Service installed successfully.");
+        //         std::thread::sleep(std::time::Duration::from_secs(3));
+        //         std::process::exit(0)
+        //     },
+        //     Err(err) =>{
                 
-                eprintln!("____Failed to install service: {:?}", err);
-                std::process::exit(0)
-            } ,
+        //         eprintln!("____Failed to install service: {:?}", err);
+        //         std::process::exit(0)
+        //     } ,
+        // }
+        match windows_service_manager::install_service_with_nssm() {
+            Ok(_) => println!("Service installed successfully."),
+            Err(e) => eprintln!("Failed to install service: {}", e),
         }
+    
     }
 
     std::thread::park();
