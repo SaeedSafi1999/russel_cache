@@ -205,59 +205,165 @@
 //     Ok(())
 // }
 
-use std::process::Command;
+// use std::process::Command;
+// use std::env;
+
+// const SERVICE_NAME: &str = "Rusel_Cache_Service10";
+// const SERVICE_DISPLAY_NAME: &str = "Russel Cache Service";
+// const EXECUTABLE_NAME: &str = "russel.exe"; // Change this to the name of your compiled executable
+
+
+// pub fn install_service_with_nssm() -> Result<(), String> {
+//     let current_exe = env::current_exe().map_err(|e| format!("Failed to get current exe: {}", e))?;
+//     let current_exe_str = current_exe.to_str().ok_or("Failed to convert path to string")?;
+//     println!("{:?}",current_exe_str);
+//     // Adjust the NSSM path if it's not in your PATH
+//     let nssm_path = "C:\\Users\\DIAKO\\Desktop\\nssm-2.24\\win32";
+    
+//     // Install the service
+//     let install_status = Command::new(nssm_path)
+//         .arg("install")
+//         .arg(SERVICE_NAME)
+//         .arg(current_exe_str)
+//         .status()
+//         .map_err(|e| format!("Failed to execute NSSM install: {}", e))?;
+    
+//     if !install_status.success() {
+//         return Err(format!("NSSM install failed with status: {}", install_status));
+//     }
+
+//     // Set the display name
+//     let set_display_name_status = Command::new(nssm_path)
+//         .arg("set")
+//         .arg(SERVICE_NAME)
+//         .arg("DisplayName")
+//         .arg(SERVICE_DISPLAY_NAME)
+//         .status()
+//         .map_err(|e| format!("Failed to execute NSSM set DisplayName: {}", e))?;
+    
+//     if !set_display_name_status.success() {
+//         return Err(format!("NSSM set DisplayName failed with status: {}", set_display_name_status));
+//     }
+
+//     // Optionally set the service description
+//     let description = "This service runs Russel cache and checks health of the application";
+//     let set_description_status = Command::new(nssm_path)
+//         .arg("set")
+//         .arg(SERVICE_NAME)
+//         .arg("Description")
+//         .arg(description)
+//         .status()
+//         .map_err(|e| format!("Failed to execute NSSM set Description: {}", e))?;
+    
+//     if !set_description_status.success() {
+//         return Err(format!("NSSM set Description failed with status: {}", set_description_status));
+//     }
+
+//     Ok(())
+// }
+extern crate winapi;
+
 use std::env;
+use std::ffi::CString;
+use std::ptr::null_mut;
+use std::process::Command;
+use winapi::um::shellapi::ShellExecuteA;
 
-const SERVICE_NAME: &str = "Rusel_Cache_Service10";
-const SERVICE_DISPLAY_NAME: &str = "Russel Cache Service";
-const EXECUTABLE_NAME: &str = "russel.exe"; // Change this to the name of your compiled executable
-
+const SERVICE_NAME: &str = "russel test"; 
+const SERVICE_DISPLAY_NAME: &str = "Your Service Display Name"; 
+const SW_SHOW: i32 = 5;
 
 pub fn install_service_with_nssm() -> Result<(), String> {
-    let current_exe = env::current_exe().map_err(|e| format!("Failed to get current exe: {}", e))?;
+    let current_exe = env::current_exe().map_err(|e| format!("Failed to get current exe: {:?}", e))?;
     let current_exe_str = current_exe.to_str().ok_or("Failed to convert path to string")?;
-    println!("{:?}",current_exe_str);
+    println!("{:?}", current_exe_str);
+    
     // Adjust the NSSM path if it's not in your PATH
-    let nssm_path = "C:\\Users\\DIAKO\\Desktop\\nssm-2.24\\win32";
-    
-    // Install the service
-    let install_status = Command::new(nssm_path)
-        .arg("install")
-        .arg(SERVICE_NAME)
-        .arg(current_exe_str)
-        .status()
-        .map_err(|e| format!("Failed to execute NSSM install: {}", e))?;
-    
-    if !install_status.success() {
-        return Err(format!("NSSM install failed with status: {}", install_status));
+    let nssm_path = "C:\\Users\\DIAKO\\Desktop\\nssm-2.24\\win32"; // Specify the full path to nssm.exe
+
+    // Construct the NSSM install command
+    let command = format!("install {} \"{}\"", SERVICE_NAME, nssm_path);
+
+    // Run the command as administrator
+    let command_cstr = CString::new(command).map_err(|e| e.to_string())?;
+    let result = unsafe {
+        ShellExecuteA(
+            null_mut(),
+            CString::new("runas").unwrap().as_ptr(), // Use "runas" to request elevated privileges
+            command_cstr.as_ptr(),
+            null_mut(),
+            null_mut(),
+            SW_SHOW,
+        )
+    };
+
+    if result as isize <= 32 {
+        let error_message = match result as isize {
+            0 => "The operation was unsuccessful.",
+            2 => "The system cannot find the file specified.",
+            5 => "Access is denied.",
+            30 => "The other program is not responding.",
+            // Add other cases as needed
+            _ => "Unknown error code.",
+        };
+        return Err(format!("Failed to install russel,error code: 0x{:X}, {}", result as isize, error_message));
     }
 
     // Set the display name
-    let set_display_name_status = Command::new(nssm_path)
-        .arg("set")
-        .arg(SERVICE_NAME)
-        .arg("DisplayName")
-        .arg(SERVICE_DISPLAY_NAME)
-        .status()
-        .map_err(|e| format!("Failed to execute NSSM set DisplayName: {}", e))?;
-    
-    if !set_display_name_status.success() {
-        return Err(format!("NSSM set DisplayName failed with status: {}", set_display_name_status));
+    let set_display_name_command = format!("set {} DisplayName {:?}", SERVICE_NAME, SERVICE_DISPLAY_NAME);
+    let set_display_name_cstr = CString::new(set_display_name_command).map_err(|e| e.to_string())?;
+    let set_display_name_result = unsafe {
+        ShellExecuteA(
+            null_mut(),
+            CString::new("runas").unwrap().as_ptr(),
+            set_display_name_cstr.as_ptr(),
+            null_mut(),
+            null_mut(),
+            SW_SHOW,
+        )
+    };
+
+    if result as isize <= 32 {
+        let error_message = match result as isize {
+            0 => "The operation was unsuccessful.",
+            2 => "The system cannot find the file specified.",
+            5 => "Access is denied.",
+            30 => "The other program is not responding.",
+            // Add other cases as needed
+            _ => "Unknown error code.",
+        };
+        return Err(format!("Failed to install russel,error code: 0x{:X}, {}", result as isize, error_message));
     }
+
 
     // Optionally set the service description
     let description = "This service runs Russel cache and checks health of the application";
-    let set_description_status = Command::new(nssm_path)
-        .arg("set")
-        .arg(SERVICE_NAME)
-        .arg("Description")
-        .arg(description)
-        .status()
-        .map_err(|e| format!("Failed to execute NSSM set Description: {}", e))?;
-    
-    if !set_description_status.success() {
-        return Err(format!("NSSM set Description failed with status: {}", set_description_status));
+    let set_description_command = format!("set {} Description \"{}\"", SERVICE_NAME, description);
+    let set_description_cstr = CString::new(set_description_command).map_err(|e| e.to_string())?;
+    let set_description_result = unsafe {
+        ShellExecuteA(
+            null_mut(),
+            CString::new("runas").unwrap().as_ptr(),
+            set_description_cstr.as_ptr(),
+            null_mut(),
+            null_mut(),
+            SW_SHOW,
+        )
+    };
+
+    if result as isize <= 32 {
+        let error_message = match result as isize {
+            0 => "The operation was unsuccessful.",
+            2 => "The system cannot find the file specified.",
+            5 => "Access is denied.",
+            30 => "The other program is not responding.",
+            // Add other cases as needed
+            _ => "Unknown error code.",
+        };
+        return Err(format!("Failed to install russel,error code: 0x{:X}, {}", result as isize, error_message));
     }
+
 
     Ok(())
 }
+
