@@ -13,7 +13,7 @@ use winapi::shared::minwindef::{DWORD, LPVOID, TRUE};
 use winapi::um::errhandlingapi::GetLastError;
 use winapi::shared::winerror::ERROR_CALL_NOT_IMPLEMENTED;
 const SERVICE_WIN32_OWN_PROCESS: DWORD = 0x00000010;
-const SERVICE_NAME: &str = "Rusel_Cache_Service5";
+const SERVICE_NAME: &str = "Rusel_Cache_Service6";
 const SERVICE_DISPLAY_NAME: &str = "russel cache services";
 const LOOPBACK_ADDR: [u8; 4] = [127, 0, 0, 1];
 const SENDER_PORT: u16 = 1234;
@@ -30,7 +30,7 @@ pub fn install_service() -> windows_service::Result<()> {
     let manager_access = ServiceManagerAccess::CONNECT | ServiceManagerAccess::CREATE_SERVICE;
     let service_manager = ServiceManager::local_computer(None::<&str>, manager_access)?;
     let service_binary_path = ::std::env::current_exe().unwrap();
-    
+    println!("{:?}",service_binary_path);
     let service_info = ServiceInfo {
         name: OsString::from(SERVICE_NAME),
         display_name: OsString::from(SERVICE_DISPLAY_NAME),
@@ -40,11 +40,11 @@ pub fn install_service() -> windows_service::Result<()> {
         executable_path: service_binary_path,
         launch_arguments: vec![],
         dependencies: vec![],
-        account_name: None, // run as System
+        account_name: None,
         account_password: None,
     };
 
-    let service = service_manager.create_service(&service_info, ServiceAccess::CHANGE_CONFIG)?;
+    let service = service_manager.create_service(&service_info, ServiceAccess::START | ServiceAccess::STOP | ServiceAccess::CHANGE_CONFIG | ServiceAccess::PAUSE_CONTINUE)?;
     service.set_description("This service runs Russel cache and checks health of the application")?;
     
     Ok(())

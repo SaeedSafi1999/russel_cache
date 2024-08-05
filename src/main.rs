@@ -63,8 +63,4 @@ fn main() {
 
     std::thread::park();
 
-    // loop {
-    //     std::thread::park();
-    // }
-
 }
