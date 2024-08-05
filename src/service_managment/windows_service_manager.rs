@@ -278,20 +278,17 @@ pub fn install_service_with_nssm() -> Result<(), String> {
     let current_exe_str = current_exe.to_str().ok_or("Failed to convert path to string")?;
     println!("{:?}", current_exe_str);
     
-    // Adjust the NSSM path if it's not in your PATH
-    let nssm_path = "C:\\Users\\DIAKO\\Desktop\\nssm-2.24\\win32"; // Specify the full path to nssm.exe
+    let nssm_path = std::env::current_exe().unwrap().join("nssm");
 
-    // Construct the NSSM install command
-    let command = format!("install {} \"{}\"", SERVICE_NAME, nssm_path);
+    let command = format!("& \".\\nssm.exe\" install {} \"{}\"", SERVICE_NAME,current_exe_str);
 
-    // Run the command as administrator
     let command_cstr = CString::new(command).map_err(|e| e.to_string())?;
     let result = unsafe {
         ShellExecuteA(
-            null_mut(),
+             null_mut(),
             CString::new("runas").unwrap().as_ptr(), // Use "runas" to request elevated privileges
+            CString::new(&nssm_path.to_str().unwrap()).unwrap().as_ptr() as *const i8,
             command_cstr.as_ptr(),
-            null_mut(),
             null_mut(),
             SW_SHOW,
         )
@@ -306,7 +303,7 @@ pub fn install_service_with_nssm() -> Result<(), String> {
             // Add other cases as needed
             _ => "Unknown error code.",
         };
-        return Err(format!("Failed to install russel,error code: 0x{:X}, {}", result as isize, error_message));
+        return Err(format!("Failed to install russel service,error code: 0x{:X}, {}", result as isize, error_message));
     }
 
     // Set the display name
@@ -332,7 +329,7 @@ pub fn install_service_with_nssm() -> Result<(), String> {
             // Add other cases as needed
             _ => "Unknown error code.",
         };
-        return Err(format!("Failed to install russel,error code: 0x{:X}, {}", result as isize, error_message));
+        return Err(format!("Failed to set description russel,error code: 0x{:X}, {}", result as isize, error_message));
     }
 
 
@@ -360,7 +357,7 @@ pub fn install_service_with_nssm() -> Result<(), String> {
             // Add other cases as needed
             _ => "Unknown error code.",
         };
-        return Err(format!("Failed to install russel,error code: 0x{:X}, {}", result as isize, error_message));
+        return Err(format!("Failed to set optional args russel,error code: 0x{:X}, {}", result as isize, error_message));
     }
 
 
