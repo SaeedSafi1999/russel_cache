@@ -287,7 +287,7 @@ pub fn install_service_with_nssm() -> Result<(), String> {
         ShellExecuteA(
              null_mut(),
             CString::new("runas").unwrap().as_ptr(), // Use "runas" to request elevated privileges
-            CString::new(&nssm_path.to_str().unwrap()).unwrap().as_ptr() as *const i8,
+            null_mut(),
             command_cstr.as_ptr(),
             null_mut(),
             SW_SHOW,
@@ -301,7 +301,7 @@ pub fn install_service_with_nssm() -> Result<(), String> {
             5 => "Access is denied.",
             30 => "The other program is not responding.",
             // Add other cases as needed
-            _ => "Unknown error code.",
+            _ => "Unknown error code.or pc can not run te application",
         };
         return Err(format!("Failed to install russel service,error code: 0x{:X}, {}", result as isize, error_message));
     }
