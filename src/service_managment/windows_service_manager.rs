@@ -261,106 +261,144 @@
 
 //     Ok(())
 // }
-extern crate winapi;
+// extern crate winapi;
 
-use std::env;
-use std::ffi::CString;
-use std::ptr::null_mut;
+// use std::env;
+// use std::ffi::CString;
+// use std::ptr::null_mut;
+// use std::process::Command;
+// use winapi::um::shellapi::ShellExecuteA;
+
+// const SERVICE_NAME: &str = "russel test"; 
+// const SERVICE_DISPLAY_NAME: &str = "Your Service Display Name"; 
+// const SW_SHOW: i32 = 5;
+
+// pub fn install_service_with_nssm() -> Result<(), String> {
+//     let current_exe = env::current_exe().map_err(|e| format!("Failed to get current exe: {:?}", e))?;
+//     let current_exe_str = current_exe.to_str().ok_or("Failed to convert path to string")?;
+//     println!("{:?}", current_exe_str);
+    
+//     let nssm_path = std::env::current_exe().unwrap().join("nssm");
+
+//     let command = format!("& \".\\nssm.exe\" install {} \"{}\"", SERVICE_NAME,current_exe_str);
+
+//     let command_cstr = CString::new(command).map_err(|e| e.to_string())?;
+//     let result = unsafe {
+//         ShellExecuteA(
+//              null_mut(),
+//             CString::new("runas").unwrap().as_ptr(), // Use "runas" to request elevated privileges
+//             CString::new(&nssm_path.to_str().unwrap()).unwrap().as_ptr() as *const i8,
+//             command_cstr.as_ptr(),
+//             null_mut(),
+//             SW_SHOW,
+//         )
+//     };
+
+//     if result as isize <= 32 {
+//         let error_message = match result as isize {
+//             0 => "The operation was unsuccessful.",
+//             2 => "The system cannot find the file specified.",
+//             5 => "Access is denied.",
+//             30 => "The other program is not responding.",
+//             // Add other cases as needed
+//             _ => "Unknown error code.",
+//         };
+//         return Err(format!("Failed to install russel service,error code: 0x{:X}, {}", result as isize, error_message));
+//     }
+
+//     // Set the display name
+//     let set_display_name_command = format!("set {} DisplayName {:?}", SERVICE_NAME, SERVICE_DISPLAY_NAME);
+//     let set_display_name_cstr = CString::new(set_display_name_command).map_err(|e| e.to_string())?;
+//     let set_display_name_result = unsafe {
+//         ShellExecuteA(
+//             null_mut(),
+//             CString::new("runas").unwrap().as_ptr(),
+//             set_display_name_cstr.as_ptr(),
+//             null_mut(),
+//             null_mut(),
+//             SW_SHOW,
+//         )
+//     };
+
+//     if result as isize <= 32 {
+//         let error_message = match result as isize {
+//             0 => "The operation was unsuccessful.",
+//             2 => "The system cannot find the file specified.",
+//             5 => "Access is denied.",
+//             30 => "The other program is not responding.",
+//             // Add other cases as needed
+//             _ => "Unknown error code.",
+//         };
+//         return Err(format!("Failed to set description russel,error code: 0x{:X}, {}", result as isize, error_message));
+//     }
+
+
+//     // Optionally set the service description
+//     let description = "This service runs Russel cache and checks health of the application";
+//     let set_description_command = format!("set {} Description \"{}\"", SERVICE_NAME, description);
+//     let set_description_cstr = CString::new(set_description_command).map_err(|e| e.to_string())?;
+//     let set_description_result = unsafe {
+//         ShellExecuteA(
+//             null_mut(),
+//             CString::new("runas").unwrap().as_ptr(),
+//             set_description_cstr.as_ptr(),
+//             null_mut(),
+//             null_mut(),
+//             SW_SHOW,
+//         )
+//     };
+
+//     if result as isize <= 32 {
+//         let error_message = match result as isize {
+//             0 => "The operation was unsuccessful.",
+//             2 => "The system cannot find the file specified.",
+//             5 => "Access is denied.",
+//             30 => "The other program is not responding.",
+//             // Add other cases as needed
+//             _ => "Unknown error code.",
+//         };
+//         return Err(format!("Failed to set optional args russel,error code: 0x{:X}, {}", result as isize, error_message));
+//     }
+
+
+//     Ok(())
+// }
 use std::process::Command;
-use winapi::um::shellapi::ShellExecuteA;
+use std::env;
 
-const SERVICE_NAME: &str = "russel test"; 
-const SERVICE_DISPLAY_NAME: &str = "Your Service Display Name"; 
-const SW_SHOW: i32 = 5;
+const SERVICE_NAME: &str = "MyServiceName";
 
 pub fn install_service_with_nssm() -> Result<(), String> {
+    // Get the current executable path
     let current_exe = env::current_exe().map_err(|e| format!("Failed to get current exe: {:?}", e))?;
     let current_exe_str = current_exe.to_str().ok_or("Failed to convert path to string")?;
-    println!("{:?}", current_exe_str);
-    
-    let nssm_path = std::env::current_exe().unwrap().join("nssm");
 
-    let command = format!("& \".\\nssm.exe\" install {} \"{}\"", SERVICE_NAME,current_exe_str);
-
-    let command_cstr = CString::new(command).map_err(|e| e.to_string())?;
-    let result = unsafe {
-        ShellExecuteA(
-             null_mut(),
-            CString::new("runas").unwrap().as_ptr(), // Use "runas" to request elevated privileges
-            null_mut(),
-            command_cstr.as_ptr(),
-            null_mut(),
-            SW_SHOW,
-        )
-    };
-
-    if result as isize <= 32 {
-        let error_message = match result as isize {
-            0 => "The operation was unsuccessful.",
-            2 => "The system cannot find the file specified.",
-            5 => "Access is denied.",
-            30 => "The other program is not responding.",
-            // Add other cases as needed
-            _ => "Unknown error code.or pc can not run te application",
-        };
-        return Err(format!("Failed to install russel service,error code: 0x{:X}, {}", result as isize, error_message));
+    // Get the nssm executable path (assumed to be in the same directory as the current exe)
+    let nssm_path = current_exe.parent().unwrap().join("nssm");
+    println!("{:?}",nssm_path);
+    // Ensure nssm.exe exists at the expected path
+    if !nssm_path.exists() {
+        return Err(format!("nssm.exe not found at path: {:?}", nssm_path));
     }
 
-    // Set the display name
-    let set_display_name_command = format!("set {} DisplayName {:?}", SERVICE_NAME, SERVICE_DISPLAY_NAME);
-    let set_display_name_cstr = CString::new(set_display_name_command).map_err(|e| e.to_string())?;
-    let set_display_name_result = unsafe {
-        ShellExecuteA(
-            null_mut(),
-            CString::new("runas").unwrap().as_ptr(),
-            set_display_name_cstr.as_ptr(),
-            null_mut(),
-            null_mut(),
-            SW_SHOW,
-        )
-    };
+    // Convert paths to fully qualified paths (absolute paths)
+    let nssm_path_str = nssm_path.to_str().ok_or("Failed to convert nssm path to string")?;
 
-    if result as isize <= 32 {
-        let error_message = match result as isize {
-            0 => "The operation was unsuccessful.",
-            2 => "The system cannot find the file specified.",
-            5 => "Access is denied.",
-            30 => "The other program is not responding.",
-            // Add other cases as needed
-            _ => "Unknown error code.",
-        };
-        return Err(format!("Failed to set description russel,error code: 0x{:X}, {}", result as isize, error_message));
+    // Command to run nssm.exe as an administrator
+    let install_status = Command::new("powershell.exe")
+        .arg("-Command")
+        .arg("Start-Process")
+        .arg(nssm_path_str)
+        .arg("-ArgumentList")
+        .arg(format!("nssm.exe install {}, \"{}\"", SERVICE_NAME, current_exe_str))
+        .arg("-Verb")
+        .arg("RunAs")  // This requests elevation
+        .status()
+        .map_err(|e| format!("Failed to execute nssm install command as admin: {:?}", e))?;
+
+    if !install_status.success() {
+        return Err(format!("nssm install command failed with exit code: {}", install_status.code().unwrap_or(-1)));
     }
-
-
-    // Optionally set the service description
-    let description = "This service runs Russel cache and checks health of the application";
-    let set_description_command = format!("set {} Description \"{}\"", SERVICE_NAME, description);
-    let set_description_cstr = CString::new(set_description_command).map_err(|e| e.to_string())?;
-    let set_description_result = unsafe {
-        ShellExecuteA(
-            null_mut(),
-            CString::new("runas").unwrap().as_ptr(),
-            set_description_cstr.as_ptr(),
-            null_mut(),
-            null_mut(),
-            SW_SHOW,
-        )
-    };
-
-    if result as isize <= 32 {
-        let error_message = match result as isize {
-            0 => "The operation was unsuccessful.",
-            2 => "The system cannot find the file specified.",
-            5 => "Access is denied.",
-            30 => "The other program is not responding.",
-            // Add other cases as needed
-            _ => "Unknown error code.",
-        };
-        return Err(format!("Failed to set optional args russel,error code: 0x{:X}, {}", result as isize, error_message));
-    }
-
 
     Ok(())
 }
-
