@@ -3,13 +3,11 @@ use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 use crate::cache::Cache;
 
-
 #[derive(Serialize)]
 struct ApiResponse<T> {
     is_success: bool,
     data: T,
 }
-
 
 impl<T> ApiResponse<T> {
     fn ok(data: T) -> Self {
@@ -18,6 +16,7 @@ impl<T> ApiResponse<T> {
             data,
         }
     }
+
     fn fail(data: T) -> Self {
         ApiResponse {
             is_success: false,
@@ -26,7 +25,6 @@ impl<T> ApiResponse<T> {
     }
 }
 
-
 #[derive(Deserialize)]
 struct SetRequest {
     cluster: String,
@@ -34,14 +32,12 @@ struct SetRequest {
     value: String,
 }
 
-
 pub async fn set(cache: web::Data<Arc<Mutex<Cache>>>, payload: web::Json<SetRequest>) -> HttpResponse {
     let SetRequest { cluster, key, value } = &*payload;
     let set_value = value.as_bytes();
     cache.lock().unwrap().set(cluster.clone(), key.clone(), Vec::from(set_value));
     HttpResponse::Ok().json(ApiResponse::ok("Set operation successful"))
 }
-
 
 pub async fn get(cache: web::Data<Arc<Mutex<Cache>>>, info: web::Path<(String, String)>) -> HttpResponse {
     let (cluster, key) = info.into_inner();
@@ -62,6 +58,15 @@ pub async fn clear_cluster(cache: web::Data<Arc<Mutex<Cache>>>, cluster: web::Pa
     HttpResponse::Ok().json(ApiResponse::ok("Clear cluster operation successful"))
 }
 
+pub async fn get_keys_of_cluster(cache: web::Data<Arc<Mutex<Cache>>>, cluster: web::Path<String>) -> HttpResponse {
+    let keys_option = cache.lock().unwrap().get_keys_of_cluster(&cluster);
+
+    match keys_option {
+        Some(keys) => HttpResponse::Ok().json(ApiResponse::ok(keys)),
+        None => HttpResponse::NotFound().json(ApiResponse::fail("No keys found for this cluster")),
+    }
+}
+
 pub async fn clear_all(cache: web::Data<Arc<Mutex<Cache>>>) -> HttpResponse {
     cache.lock().unwrap().clear_all();
     HttpResponse::Ok().json(ApiResponse::ok("Clear all operation successful"))
@@ -77,8 +82,8 @@ pub async fn get_port(cache: web::Data<Arc<Mutex<Cache>>>) -> HttpResponse {
     HttpResponse::Ok().json(ApiResponse::ok(port))
 }
 
-pub async fn run_server(cache: Arc<Mutex<Cache>>,port_number:String,ip:String) -> std::io::Result<()> {
-    let port:String = port_number;
+pub async fn run_server(cache: Arc<Mutex<Cache>>, port_number: String, ip: String) -> std::io::Result<()> {
+    let port: String = port_number;
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(cache.clone())) 
@@ -86,11 +91,12 @@ pub async fn run_server(cache: Arc<Mutex<Cache>>,port_number:String,ip:String) -
             .route("/api/get/{cluster}/{key}", web::get().to(get))
             .route("/api/delete/{cluster}/{key}", web::delete().to(delete))
             .route("/api/clear_cluster/{cluster}", web::delete().to(clear_cluster))
+            .route("/api/keys/{cluster}", web::get().to(get_keys_of_cluster))
             .route("/api/clear_all", web::delete().to(clear_all))
             .route("/api/get_clusters", web::get().to(get_all_clusters))
             .route("/api/port", web::get().to(get_port))
     })
-    .bind(format!("{}:{}",ip,port))? // Bind to localhost on port 5022
+    .bind(format!("{}:{}", ip, port))? // Bind to localhost on port 5022
     .run()
     .await
 }
