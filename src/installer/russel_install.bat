@@ -15,7 +15,7 @@ set CURRENT_PATH=%~dp0
 set NSSM_PATH=%CURRENT_PATH%nssm\nssm.exe
 
 :: Install the Rust executable as a service using nssm
-"%NSSM_PATH%" install russel "%CURRENT_PATH%russel.exe" -- install_service
+"%NSSM_PATH%" install russel "%CURRENT_PATH%russel.exe" 
 
 :: Start the service (optional)
 "%NSSM_PATH%" start russel
