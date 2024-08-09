@@ -1,5 +1,5 @@
 {
-    "port":5022,
+    "port":6060,
     "memory_size_limit":10,
     "secret_encrypt_key" :"Q!AZW@SXDE#$TRGFBVC%^&YHNBJIU*&YRGDWEF"
 }

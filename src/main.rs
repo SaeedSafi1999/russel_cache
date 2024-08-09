@@ -1,18 +1,12 @@
 use std::sync::{Arc, Mutex};
-use std::thread;
 use crate::public_api::server;
 use memory_handling::memory_handling::MemoryHandler;
-use service_managment::windows_service_manager;
 mod cache;
-mod input;
 mod public_api;
 mod config;
 mod memory_handling;
-mod env_var;
-mod service_managment;
 use std::env;
 use crate::config::Settings;
-//use crate::input::handle_input;
 use cache::Cache;
 
 fn main() {
@@ -30,8 +24,8 @@ fn main() {
     println!("
     ");
     
-    let args: Vec<String> = env::args().collect();
-    let main_args = args.last().unwrap();
+    // let args: Vec<String> = env::args().collect();
+    // let main_args = args.last().unwrap();
 
     // Reading configurations from config.json
     let settings: Settings = Settings::new();
@@ -42,7 +36,7 @@ fn main() {
     std::thread::spawn(move || {
         actix_web::rt::System::new().block_on(async move {
             let settings: Settings = Settings::new();
-            server::run_server(cache_clone, settings.port.to_string(), "127.0.0.1".to_string()).await.unwrap();
+            server::run_server(cache_clone, settings.port.to_string(), "0.0.0.0".to_string()).await.unwrap();
         });
     });
 
